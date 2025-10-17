@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+@layer components {
+  .h6 {
+    @apply font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px];
+  }
+}
