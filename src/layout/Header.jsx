@@ -12,14 +12,16 @@ import {
   getActiveSocials,
 } from "../data/siteConfig";
 
-export default function Header() {
+export default function Header({ className = "" }) {
   const phone = getPrimaryContact("phone");
   const email = getPrimaryContact("email");
   const announce = getActiveAnnouncement("en");
   const socials = getActiveSocials();
 
   return (
-    <header className="hidden xl:block w-full h-auto bg-[#23293C] text-white px-8 py-2">
+    <header
+      className={`hidden xl:block mx-auto max-w-7xl h-auto bg-[#23293C] text-white px-8 py-2 ${className}`}
+    >
       <div className="flex items-center justify-between gap-4 py-2">
         {/* Left — Phone & Email */}
         <div className="flex items-center gap-6">
