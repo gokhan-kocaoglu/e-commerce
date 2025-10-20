@@ -165,7 +165,7 @@ function Slide({ item }) {
         >
           <div
             className="space-y-4 md:space-y-6"
-            // Mobilde limit yok (taşma riskine göre) → md+ 'da maxWidth uygula
+            // Mobilde limit yok (taşma riskine göre) → md+ 'da maxWidth
             style={{
               maxWidth:
                 typeof maxWidth === "number" ? `${maxWidth}px` : maxWidth,

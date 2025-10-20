@@ -2,6 +2,7 @@ import HeroSlider from "../components/HeroSlider";
 import { homeSliders } from "../data/homeSliders";
 import EditorsPick from "../components/EditorsPick";
 import BestSellers from "../components/BestSellers";
+import PromoSlider from "../components/Slider";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       />
       <EditorsPick />
       <BestSellers />
+      <PromoSlider />
     </section>
   );
 }
