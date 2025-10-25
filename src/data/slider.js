@@ -32,7 +32,7 @@ export const promoSliders = [
   },
 
   {
-    id: "vita-classic-01",
+    id: "vita-classic-02",
     theme: {
       background: "#2D7B69",
       textColor: "#FFFFFF",
