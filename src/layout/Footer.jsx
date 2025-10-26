@@ -112,7 +112,7 @@ export default function Footer({ className = "" }) {
 
               <form
                 onSubmit={onSubmit}
-                className="mt-4 flex w-full items-stretch rounded-md overflow-hidden"
+                className="mt-4 flex w-full items-stretch rounded-[5px] overflow-hidden"
               >
                 <input
                   type="email"
@@ -126,8 +126,8 @@ export default function Footer({ className = "" }) {
                 <button
                   type="submit"
                   className="shrink-0 h-11 px-5 bg-[#23A6F0] text-white
-                     font-['Montserrat'] 
-                     lg:mr-[-12px]" /* İSTERSEN: butonu desktop’ta sağdan 12px dışarı taşır */
+                     font-['Montserrat'] text-[14px] leading-[28px] font-normal tracking-[0.2px]  
+                     " /* İSTERSEN: butonu desktop’ta sağdan 12px dışarı taşır */
                 >
                   {newsletter.buttonLabel}
                 </button>
