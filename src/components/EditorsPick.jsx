@@ -1,6 +1,23 @@
 // src/components/home/EditorsPick.jsx
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { sections, categoriesById, mediaById } from "../data/editors";
+import { http } from "../lib/http"; // verdiğin axios instance
+
+// Vite alt dizin deploy desteği için görsel yolu normalize
+const withBase = (p = "") => {
+  const base = import.meta.env.BASE_URL || "/";
+  return `${base.replace(/\/+$/, "")}/${p.replace(/^\/+/, "")}`;
+};
+const normalizeImageUrl = (url) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  // "../" ve "./" öneklerini temizle
+  const cleaned = url
+    .replace(/^(\.\.\/)+/, "")
+    .replace(/^\.\/+/, "")
+    .replace(/^\/+/, "");
+  return withBase(cleaned); // -> assets/editor/xxx.jpg
+};
 
 function Pill({ children }) {
   return (
@@ -11,16 +28,18 @@ function Pill({ children }) {
 }
 
 function Card({ category, media, className = "", imgClassName = "" }) {
+  if (!category || !media) return null;
+
   return (
     <Link
-      to={category.path}
+      to={`/shop/${category.slug}`} // path yerine slug’dan route
       className={`relative block overflow-hidden bg-zinc-100 ${className}`}
       aria-label={category.name}
     >
       {/* Görsel */}
       <img
         src={media.url}
-        alt={media.alt}
+        alt={media.alt || category.name}
         className={`h-full w-full object-cover transition-transform duration-300 will-change-transform hover:scale-105 ${imgClassName}`}
         loading="lazy"
       />
@@ -37,17 +56,78 @@ function Card({ category, media, className = "", imgClassName = "" }) {
 }
 
 export default function EditorsPick() {
-  const section = sections.find((s) => s.key === "editorsPick" && s.isActive);
-  if (!section) return null;
+  const [slots, setSlots] = useState({
+    "left-large": null,
+    "middle-tall": null,
+    "right-top": null,
+    "right-bottom": null,
+  });
 
-  // Slot -> Category & Media
-  const pick = Object.fromEntries(
-    section.items.map((it) => {
-      const cat = categoriesById[it.categoryId];
-      const med = mediaById[cat?.heroImageId];
-      return [it.slot, { category: cat, media: med }];
-    })
+  // Backend key -> UI slot
+  const keyToSlot = useMemo(
+    () => ({
+      1: "left-large",
+      2: "middle-tall",
+      3: "right-top",
+      4: "right-bottom",
+    }),
+    []
   );
+
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      try {
+        // 1) Editor’s picks
+        const epRes = await http.get("api/content/editors-picks");
+        const picks = (epRes?.data?.data || []).slice(0, 4);
+
+        // 2) Her pick’in ilk categoryIds[0] için detay çek
+        const details = await Promise.all(
+          picks.map(async (p) => {
+            const firstId = p?.categoryIds?.[0];
+            if (!firstId) return null;
+            const catRes = await http.get(`api/catalog/categories/${firstId}`);
+            const cat = catRes?.data?.data;
+            if (!cat) return null;
+
+            const slot = keyToSlot[p.key];
+            return {
+              slot,
+              category: {
+                id: cat.id,
+                name: cat.name,
+                slug: cat.slug,
+              },
+              media: {
+                url: normalizeImageUrl(cat.heroImageUrl),
+                alt: `${cat.name} hero`,
+              },
+            };
+          })
+        );
+
+        if (!alive) return;
+        const next = {
+          "left-large": null,
+          "middle-tall": null,
+          "right-top": null,
+          "right-bottom": null,
+        };
+        details.filter(Boolean).forEach((d) => {
+          next[d.slot] = { category: d.category, media: d.media };
+        });
+        setSlots(next);
+      } catch {
+        // interceptor toast gösteriyor
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [keyToSlot]);
 
   return (
     <section className="mx-auto w-full flex justify-center max-w-7xl px-4 bg-[#FAFAFA]">
@@ -55,10 +135,10 @@ export default function EditorsPick() {
         {/* Başlık */}
         <div className="mb-8 text-center md:mb-12 max-w-48 md:max-w-90">
           <h3 className="font-['Montserrat'] text-2xl font-bold leading-[32px] tracking-[0.1px] text-[#252B42]">
-            {section.title}
+            EDITOR’S PICK
           </h3>
           <p className="mt-3 text-[#737373] text-center font-['Montserrat'] font-normal text-sm leading-[20px] tracking-[0.2px]">
-            {section.subtitle}
+            Problems trying to resolve the conflict between
           </p>
         </div>
 
@@ -67,9 +147,8 @@ export default function EditorsPick() {
           {/* LEFT - Large */}
           <div className="md:flex-[2]">
             <Card
-              category={pick["left-large"].category}
-              media={pick["left-large"].media}
-              // Mobil: geniş oran; md+ sabit yükseklik
+              category={slots["left-large"]?.category}
+              media={slots["left-large"]?.media}
               className="w-80 h-[500px] aspect-[2/3] md:w-auto md:aspect-auto md:h-[500px] lg:h-[500px] md:max-w-80 lg:min-w-[510px]"
               imgClassName="object-center"
             />
@@ -78,12 +157,9 @@ export default function EditorsPick() {
           {/* MIDDLE - Tall (WOMEN) */}
           <div className="md:flex-[1] min-w-80 lg:min-w-60">
             <Card
-              category={pick["middle-tall"].category}
-              media={pick["middle-tall"].media}
-              // Mobil: portre oran (2/3) daha fazla kadraj gösterir
-              // md+: sabit yükseklik
+              category={slots["middle-tall"]?.category}
+              media={slots["middle-tall"]?.media}
               className="w-80 h-[500px] aspect-[2/3] md:w-auto md:aspect-auto md:h-[500px] lg:h-[500px]"
-              // Mobilde yüz/kafa kesilmesin diye kadrajı biraz yukarı al
               imgClassName="object-[center_0%] md:object-center"
             />
           </div>
@@ -91,15 +167,14 @@ export default function EditorsPick() {
           {/* RIGHT - Two stacked small cards */}
           <div className="md:flex-[1] flex flex-col gap-4 lg:min-w-[240px]">
             <Card
-              category={pick["right-top"].category}
-              media={pick["right-top"].media}
-              // Mobil: oran; md+: sabit yükseklik
+              category={slots["right-top"]?.category}
+              media={slots["right-top"]?.media}
               className="w-80 aspect-[4/3] md:w-80 lg:w-60 md:aspect-auto md:h-[242px]"
               imgClassName="object-center"
             />
             <Card
-              category={pick["right-bottom"].category}
-              media={pick["right-bottom"].media}
+              category={slots["right-bottom"]?.category}
+              media={slots["right-bottom"]?.media}
               className="w-80 aspect-[4/3] md:w-80 lg:w-60 md:aspect-auto md:h-[242px]"
               imgClassName="object-center"
             />

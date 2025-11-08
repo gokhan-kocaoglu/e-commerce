@@ -58,7 +58,7 @@ export const socials = [
 export const announcements = [
   {
     id: "follow-and-win",
-    message: "Follow Us  and get a chance to win 80% off",
+    message: "Backend den gelmiyor",
     locale: "en",
     startsAt: null,
     endsAt: null,
@@ -124,7 +124,7 @@ export const siteConfig = {
           {
             id: "accessories-jewelry",
             label: "Accessories & Jewelry",
-            path: "/shop/accessories-jewelry",
+            path: "/shop/accessories",
           },
           {
             id: "toys-hobbies",
@@ -151,10 +151,8 @@ export const siteConfig = {
   },
 
   auth: {
-    // Login / Register tek bir CTA gibi göründüğü için birlikte tutuldu
     login: { id: "login", label: "Login", path: "/login" },
     register: { id: "register", label: "Register", path: "/register" },
-    // UI'da "Login / Register" olarak gösterilecek birleşik label
     combinedLabel: "Login / Register",
   },
 
@@ -162,7 +160,6 @@ export const siteConfig = {
     // Bu sayılar store/backend’den gelebilir; default veriyoruz
     cartCount: 1,
     wishlistCount: 1,
-    // Arama, sepet, favori için route hedefleri
     routes: {
       search: "/search",
       cart: "/cart",

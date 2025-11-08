@@ -1,3 +1,5 @@
+// src/layout/Header.jsx (veya senin yolun)
+import AnnouncementTicker from "../components/AnnouncementTicker";
 import {
   Phone,
   Mail,
@@ -6,16 +8,12 @@ import {
   Youtube,
   Twitter,
 } from "lucide-react";
-import {
-  getPrimaryContact,
-  getActiveAnnouncement,
-  getActiveSocials,
-} from "../data/siteConfig";
+import { getPrimaryContact, getActiveSocials } from "../data/siteConfig";
 
 export default function Header({ className = "" }) {
+  // FE sabitleri
   const phone = getPrimaryContact("phone");
   const email = getPrimaryContact("email");
-  const announce = getActiveAnnouncement("en");
   const socials = getActiveSocials();
 
   return (
@@ -48,15 +46,12 @@ export default function Header({ className = "" }) {
           )}
         </div>
 
-        {/* Center — Announcement */}
+        {/* Center — Announcement (BE -> FE fallback) */}
         <div className="hidden flex-1 items-center justify-center md:flex">
-          {announce ? (
-            <span className="h6 text-center text-zinc-100">
-              {announce.message}
-            </span>
-          ) : (
-            <span className="sr-only">No active announcement</span>
-          )}
+          <AnnouncementTicker
+            className="h6 text-center text-zinc-100"
+            intervalMs={5000}
+          />
         </div>
 
         {/* Right — Socials */}

@@ -1,72 +1,71 @@
 import { Link } from "react-router-dom";
-import { getCategoryById, getColorByCode } from "../data/catalog";
-import { formatMoney } from "../utils/format";
+import {
+  formatMoney,
+  resolveCategoryFromSlug,
+  pickHexFromName,
+} from "../utils/format";
 
 export default function ProductCard({ product }) {
-  const category = getCategoryById(product.categoryId);
-  const img = product.media?.[0];
+  const category = resolveCategoryFromSlug(product.slug);
 
   return (
-    // Dış sarmalayıcıyı parent (BestSellers) yönetiyor.
-    <div className="flex w-80 lg:w-60 flex-col items-center">
-      {/* Görsel */}
+    // Kart kapsayıcı: görsel ile aynı genişlik (240px); yatay padding yok
+    <div className="flex flex-col items-center" style={{ width: 240 }}>
+      {/* IMG */}
       <Link
         to={`/product/${product.slug}`}
-        className="block"
         aria-label={product.title}
+        className="block"
       >
-        <div
-          className="mx-auto w-[320px] lg:w-full max-h-[425px] overflow-hidden md:h-[427px] md:w-[240px]"
-          style={{ aspectRatio: "240/427" }}
-        >
+        <div className="overflow-hidden" style={{ width: 240, height: 427 }}>
           <img
-            src={img?.src}
-            alt={img?.alt || product.title}
-            className="h-full w-full object-cover object-center"
+            src={product.imageUrl}
+            alt={product.title}
+            className="block h-full w-full object-cover object-center"
             loading="lazy"
           />
         </div>
       </Link>
 
-      {/* Metinler */}
-      <div className="mt-4 flex w-full max-w-[240px] flex-col items-center text-center">
+      {/* METİN BLOKU — aynı genişlik */}
+      <div className="mt-4 text-center" style={{ width: 240 }}>
         <h5 className="font-['Montserrat'] text-[16px] font-bold leading-6 tracking-[0.1px] text-[#252B42]">
           {product.title}
         </h5>
-
         {category && (
           <Link
             to={category.path}
-            className="mt-1 font-['Montserrat'] text-[14px] font-bold leading-6 tracking-[0.2px] text-[#737373] hover:underline"
+            className="mt-1 inline-block font-['Montserrat'] text-[14px] font-bold leading-6 tracking-[0.2px] text-[#737373] hover:underline"
           >
-            {category.name}
+            {category.label}
           </Link>
         )}
-
         {/* Fiyatlar */}
-        <div className="mt-3 flex items-center gap-2 font-['Montserrat'] text-sm leading-5">
-          <span className="text-[#BDBDBD] line-through">
-            {formatMoney(product.price.list, product.price.currency)}
+        <div className="mt-3 flex items-center justify-center gap-2 font-['Montserrat'] font-bold text-[16px] leading-6 tracking-[0.1px]">
+          <span className="text-[#BDBDBD]">
+            {formatMoney(
+              product.compareAtPrice?.amount,
+              product.compareAtPrice?.currency
+            )}
           </span>
           <span className="font-bold text-[#23856D]">
-            {formatMoney(product.price.sale, product.price.currency)}
+            {formatMoney(product.price?.amount, product.price?.currency)}
           </span>
         </div>
 
-        {/* Renk seçenekleri */}
-        <div className="mt-3 flex items-center gap-2">
-          {product.options?.colors?.map((code) => {
-            const c = getColorByCode(code);
-            return (
+        {/* Renk seçenekleri — yalnızca varyant renkleri varsa */}
+        {!!product.variantColors?.length && (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            {product.variantColors.map((name) => (
               <span
-                key={code}
-                title={c?.name || code}
+                key={name}
+                title={name}
                 className="inline-block h-4 w-4 rounded-full border border-black/10"
-                style={{ backgroundColor: c?.hex || "#ccc" }}
+                style={{ backgroundColor: pickHexFromName(name) }}
               />
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,44 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import ProductCard from "../components/ProductCard";
-import { getBestSellers } from "../data/catalog";
+import {
+  fetchBestSellers,
+  fetchVariantColorsForList,
+  selectBestSellerCards,
+  selectBestSellersStatus,
+  selectBestSellersError,
+} from "../store/bestSellersSlice";
 
 export default function BestSellers({ limit = 8, className = "" }) {
-  const items = getBestSellers(limit);
+  const dispatch = useDispatch();
+  const items = useSelector(selectBestSellerCards);
+  const status = useSelector(selectBestSellersStatus);
+  const error = useSelector(selectBestSellersError);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    // 1) Liste (cache tazeyse condition sayesinde fetch olmaz)
+    dispatch(fetchBestSellers({ limit, signal: controller.signal }));
+
+    return () => controller.abort();
+  }, [dispatch, limit]);
+
+  useEffect(() => {
+    if (status !== "succeeded") return;
+    const controller = new AbortController();
+    // 2) Renkler (yalnızca list geldikten sonra)
+    const ids = items.map((p) => p.id);
+    if (ids.length) {
+      dispatch(
+        fetchVariantColorsForList({
+          productIds: ids,
+          signal: controller.signal,
+        })
+      );
+    }
+    return () => controller.abort();
+  }, [dispatch, status, items]);
 
   return (
     <section
@@ -21,13 +57,29 @@ export default function BestSellers({ limit = 8, className = "" }) {
         </p>
       </div>
 
-      {/* Flex list — wrap + basis ile responsive kolon sayısı */}
-      <div className="mt-10 flex flex-wrap justify-center gap-y-18 gap-x-8 lg:gap-y-30">
-        {items.map((p) => (
-          <div key={p.id} className="">
-            <ProductCard product={p} />
+      {/* Liste — flex wrap; kart genişliği ProductCard'da sabit 240px */}
+      <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-20 lg:gap-y-[7.5rem]">
+        {status === "loading" &&
+          Array.from({ length: limit }).map((_, i) => (
+            <div key={i} className="w-[240px]" aria-hidden>
+              <div className="h-[427px] w-[240px] animate-pulse bg-zinc-200 rounded" />
+              <div className="mt-4 h-5 w-[70%] animate-pulse bg-zinc-200 mx-auto rounded" />
+              <div className="mt-2 h-4 w-[50%] animate-pulse bg-zinc-200 mx-auto rounded" />
+            </div>
+          ))}
+
+        {status === "succeeded" &&
+          items.map((p) => (
+            <div key={p.id} className="shrink-0 grow-0 basis-auto">
+              <ProductCard product={p} />
+            </div>
+          ))}
+
+        {status === "failed" && (
+          <div className="text-sm text-red-600">
+            {String(error || "Best seller ürünler yüklenemedi.")}
           </div>
-        ))}
+        )}
       </div>
     </section>
   );

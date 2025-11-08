@@ -1,12 +1,11 @@
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { promoSliders } from "../data/slider"; // senin yoluna göre
 import prevIcon from "../assets/slider/carousel-control-prev.png";
 import nextIcon from "../assets/slider/carousel-control-next.png";
 
 export default function PromoSlider({
-  items = promoSliders,
+  items,
   // Mobil: içerik boyuna göre; Desktop: sabit yükseklik (Hero ile uyumlu)
   heightClass = "h-auto md:h-[640px]",
   autoPlayDelay = 6000,

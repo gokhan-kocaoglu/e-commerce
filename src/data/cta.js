@@ -15,7 +15,7 @@ export const ctaBlocks = [
         position: "left-bottom",
         scaleDesktop: 1.06, // desktop'ta hafif büyüt
         scaleMobile: 1.0,
-        shiftXDesktopPct: -11, // sola kaydır (%)
+        shiftXDesktopPct: -24, // sola kaydır (%)
         shiftYDesktopPct: -7, // gerekirse - değer yukarı kaydırır
       },
     },
