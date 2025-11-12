@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useHistory } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { selectAuth, logoutThunk } from "../store/authSlice";
+
 import {
   User,
   Search,
@@ -18,31 +21,42 @@ import {
 } from "../data/siteConfig";
 
 export default function Header({ className = "" }) {
+  const history = useHistory();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const accountRef = useRef(null);
+  // DEĞİŞİKLİK: ref’i ikiye ayırdık; tek ref iki farklı yerde kullanılıyordu.
+  const accountRefAuth = useRef(null);
+  const accountRefGuest = useRef(null);
   const [openMobileSub, setOpenMobileSub] = useState(null);
 
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector(selectAuth) ?? {};
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutThunk()).unwrap();
+    } finally {
+      setAccountOpen(false);
+      history.replace("/"); // logout sonrası Home'a
+    }
+  };
+
   const getNavLinkProps = (item) => {
-    // Root: "/" her yerde eşleşmesin → exact
     if (item.path === "/") {
       return { exact: true, isActive: (_m, loc) => loc.pathname === "/" };
     }
-
-    // Çocuklu menüler: alt rotalarda da aktif kalsın → startsWith
     if (Array.isArray(item.children) && item.children.length > 0) {
       return { isActive: (_m, loc) => loc.pathname.startsWith(item.path) };
     }
-
-    // Diğerleri: tam eşleşme
     return { isActive: (_m, loc) => loc.pathname === item.path };
   };
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (accountRef.current && !accountRef.current.contains(e.target)) {
-        setAccountOpen(false);
-      }
+      // DEĞİŞİKLİK: iki ref’in de dışına tıklamayı kapat
+      const inAuth = accountRefAuth.current?.contains(e.target);
+      const inGuest = accountRefGuest.current?.contains(e.target);
+      if (!inAuth && !inGuest) setAccountOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -81,10 +95,9 @@ export default function Header({ className = "" }) {
                   </span>
                 </NavLink>
 
-                {/* Basit dropdown (hover) */}
+                {/* Hover dropdown (2 sütun) */}
                 {hasChildren && (
                   <div className="invisible absolute left-0 top-full z-20 translate-y-2 rounded-xl border border-zinc-100 bg-white p-2 opacity-0 shadow-lg transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 w-[480px]">
-                    {/* 2 sütun grid */}
                     <div className="grid grid-cols-2 gap-2">
                       {item.children.map((sub) => (
                         <NavLink
@@ -107,75 +120,153 @@ export default function Header({ className = "" }) {
 
         {/* Actions */}
         <div className="relative flex items-center gap-4">
-          {/* Account */}
-          {/* Desktop (md+): metinli */}
-          <Link
-            to={auth.login.path}
-            aria-label="Account"
-            className="hidden min-[920px]:inline-flex items-center gap-2 font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#23A6F0]"
-          >
-            <User className="h-4 w-4" />
-            <span>{auth.combinedLabel}</span>
-          </Link>
-
-          {/* Tablet/Mobil (md-): sadece ikon + açılır menü */}
-          <div className="relative hidden max-[919px]:block" ref={accountRef}>
-            <button
-              type="button"
-              onClick={() => setAccountOpen((s) => !s)}
-              aria-haspopup="menu"
-              aria-expanded={accountOpen}
-              aria-label="Account menu"
-              className="icon-wrap" // <-- aynı kılıf
-            >
-              <User className="h-6 w-6 md:h-4 md:w-4 block md:text-[#23A6F0] text-black" />{" "}
-              {/* <-- block */}
-            </button>
-
-            {/* Açılır menü */}
+          {/* ACCOUNT */}
+          {isAuthenticated ? (
             <div
-              className={`absolute right-0 mt-2 w-auto max-w-[calc(100vw-2rem)]
-              rounded-2xl surface-popover elev-3 z-30
-              px-2 py-3 origin-top-right
-              transition duration-150 ease-out
-              ${
-                accountOpen
-                  ? "opacity-100 visible translate-y-0 scale-100"
-                  : "opacity-0 invisible -translate-y-1 scale-95"
-              }`}
-              role="menu"
+              className="relative pt-1.5 md:pt-1 lg:pt-1"
+              ref={accountRefAuth}
             >
-              <div className="px-3 pb-2 text-center text-[11px] font-semibold tracking-wide text-zinc-500">
-                Account
-              </div>
+              <button
+                type="button"
+                onClick={() => setAccountOpen((s) => !s)}
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+                aria-label="Account menu"
+                className="inline-flex items-center gap-2"
+              >
+                {/* DEĞİŞİKLİK: ikon mavi eşiği min-[920px] */}
+                <User className="h-6 w-6 md:h-4 md:w-4 shrink-0 block text-black min-[920px]:text-[#23A6F0]" />
+                <span className="hidden min-[920px]:inline whitespace-nowrap font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#23A6F0]">
+                  {user?.firstName ? `Hi, ${user.firstName}` : "Account"}
+                </span>
+              </button>
 
-              <div className="flex flex-col gap-1">
-                <Link
-                  to={auth.login.path}
-                  onClick={() => setAccountOpen(false)}
-                  role="menuitem"
-                  className="rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60"
-                >
-                  <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
-                    <LogIn className="h-4 w-4 text-[#23A6F0]" />
-                    <span>Login</span>
-                  </span>
-                </Link>
+              <div
+                className={`absolute right-0 mt-2 w-auto max-w-[calc(100vw-2rem)]
+                rounded-2xl surface-popover elev-3 z-30
+                px-2 py-3 origin-top-right
+                transition duration-150 ease-out
+                ${
+                  accountOpen
+                    ? "opacity-100 visible translate-y-0 scale-100"
+                    : "opacity-0 invisible -translate-y-1 scale-95"
+                }`}
+                role="menu"
+              >
+                <div className="px-3 pb-2 text-center text-[11px] font-semibold tracking-wide text-zinc-500">
+                  Account
+                </div>
 
-                <Link
-                  to={auth.register.path}
-                  onClick={() => setAccountOpen(false)}
-                  role="menuitem"
-                  className="rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60"
-                >
-                  <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
-                    <UserPlus className="h-4 w-4 text-[#23A6F0]" />
-                    <span>Register</span>
-                  </span>
-                </Link>
+                <div className="flex flex-col gap-1">
+                  <Link
+                    to={auth.account?.profilePath || "/account/profile"}
+                    onClick={() => setAccountOpen(false)}
+                    role="menuitem"
+                    className="rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60"
+                  >
+                    <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
+                      <User className="h-4 w-4 text-[#23A6F0]" />
+                      <span>Profile Settings</span>
+                    </span>
+                  </Link>
+
+                  <Link
+                    to={auth.account?.ordersPath || "/account/orders"}
+                    onClick={() => setAccountOpen(false)}
+                    role="menuitem"
+                    className="rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60"
+                  >
+                    <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
+                      <ShoppingCart className="h-4 w-4 text-[#23A6F0]" />
+                      <span>My Orders</span>
+                    </span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    role="menuitem"
+                    className="text-left rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60 w-full"
+                  >
+                    <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
+                      <LogIn className="h-4 w-4 rotate-180 text-[#23A6F0]" />
+                      <span>Logout</span>
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <Link
+                to={auth.login.path}
+                aria-label="Account"
+                className="hidden min-[920px]:inline-flex items-center gap-2 font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#23A6F0]"
+              >
+                <User className="h-4 w-4" />
+                <span>{auth.combinedLabel}</span>
+              </Link>
+
+              <div
+                className="relative hidden max-[919px]:block"
+                ref={accountRefGuest}
+              >
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen((s) => !s)}
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  aria-label="Account menu"
+                  className="icon-wrap"
+                >
+                  <User className="h-6 w-6 md:h-4 md:w-4 block md:text-[#23A6F0] text-black" />
+                </button>
+
+                <div
+                  className={`absolute right-0 mt-2 w-auto max-w-[calc(100vw-2rem)]
+                    rounded-2xl surface-popover elev-3 z-30
+                    px-2 py-3 origin-top-right
+                    transition duration-150 ease-out
+                    ${
+                      accountOpen
+                        ? "opacity-100 visible translate-y-0 scale-100"
+                        : "opacity-0 invisible -translate-y-1 scale-95"
+                    }`}
+                  role="menu"
+                >
+                  <div className="px-3 pb-2 text-center text-[11px] font-semibold tracking-wide text-zinc-500">
+                    Account
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Link
+                      to={auth.login.path}
+                      onClick={() => setAccountOpen(false)}
+                      role="menuitem"
+                      className="rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60"
+                    >
+                      <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
+                        <LogIn className="h-4 w-4 text-[#23A6F0]" />
+                        <span>Login</span>
+                      </span>
+                    </Link>
+
+                    <Link
+                      to={auth.register.path}
+                      onClick={() => setAccountOpen(false)}
+                      role="menuitem"
+                      className="rounded-xl px-5 py-3 md:py-2.5 hover:bg-[#23A6F0]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23A6F0]/60"
+                    >
+                      <span className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium text-[#737373]">
+                        <UserPlus className="h-4 w-4 text-[#23A6F0]" />
+                        <span>Register</span>
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Search */}
           <Link
@@ -226,14 +317,13 @@ export default function Header({ className = "" }) {
         </div>
       </div>
 
-      {/* Mobile Menu (tam ekran değil, header altı açılır) */}
+      {/* Mobile Menu (header altı açılır) */}
       <div
         className={`md:hidden transition-[max-height] duration-300 ease-in-out overflow-hidden ${
           mobileOpen ? "h-auto" : "max-h-0"
         }`}
       >
         <div className="mx-auto w-full max-w-7xl px-6 pb-6">
-          {/* Menü tamamı ortalansın */}
           <div className="flex flex-col items-center gap-4">
             <nav className="flex w-full flex-col gap-3 pt-2">
               {nav.map((item) => {
@@ -243,7 +333,6 @@ export default function Header({ className = "" }) {
 
                 return (
                   <div key={item.id} className="w-full">
-                    {/* Parent satır */}
                     {hasChildren ? (
                       <button
                         type="button"
@@ -257,7 +346,6 @@ export default function Header({ className = "" }) {
                         aria-controls={`sub-${item.id}`}
                       >
                         <span>{item.label}</span>
-                        {/* ok/chevron */}
                         <ChevronDown
                           className={`h-5 w-5 transition-transform ${
                             isOpen ? "rotate-180" : ""
@@ -276,7 +364,6 @@ export default function Header({ className = "" }) {
                       </NavLink>
                     )}
 
-                    {/* Alt menü: sadece parent açıkken göster */}
                     {hasChildren && (
                       <div
                         id={`sub-${item.id}`}
@@ -293,8 +380,8 @@ export default function Header({ className = "" }) {
                               className="block w-full font-['Montserrat'] font-normal text-[20px] leading-[30px] tracking-[0.2px] text-center text-[#737373]"
                               activeClassName="text-zinc-900"
                               onClick={() => {
-                                setMobileOpen(false); // tüm mobil menüyü kapa
-                                setOpenMobileSub(null); // accordion’u sıfırla
+                                setMobileOpen(false);
+                                setOpenMobileSub(null);
                               }}
                             >
                               {sub.label}

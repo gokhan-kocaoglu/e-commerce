@@ -43,7 +43,6 @@ const resolveCategoryFromSlug = (slug) => {
 // ---------- Entity Adapter (ürünler)
 const productsAdapter = createEntityAdapter({
   selectId: (p) => p.id,
-  // API sırası ile render etmek istersen aşağıyı kullanma; skor/createdAt vb. ile sıralayacaksan compare ekleyebilirsin
   sortComparer: false,
 });
 
@@ -78,7 +77,6 @@ export const fetchBestSellers = createAsyncThunk(
   },
   {
     condition: ({ limit = 8 }, { getState }) => {
-      // Eğer aynı limit için veri taze ise tekrar fetch etme
       const { bestSellers } = getState();
       const key = String(limit);
       const entry = bestSellers.cache.metaByLimit[key];
@@ -105,37 +103,42 @@ export const fetchVariantColorsForProduct = createAsyncThunk(
   }
 );
 
-// Bir seferde listedeki ürünlerin renklerini getir (N+1’i kontrol edilebilir paralellikte çözer)
+// Bir seferde listedeki ürünlerin renklerini getir (N+1’i kontrollü paralellikte çözer)
 export const fetchVariantColorsForList = createAsyncThunk(
   "bestSellers/fetchVariantColorsForList",
-  async ({ productIds, signal, concurrency = 4 }, { dispatch }) => {
-    // Basit concurrency havuzu
-    const queue = [...productIds];
+  async ({ productIds, signal, concurrency = 4 }, { dispatch, getState }) => {
+    // 1) Zaten rengi alınmış olanları ele
+    const { bestSellers } = getState();
+    const missing = productIds.filter((id) => !bestSellers.colorsByProduct[id]);
+    if (!missing.length || signal?.aborted) return true;
+
+    // 2) Basit concurrency havuzu
+    const queue = [...missing];
     const workers = Array.from(
       { length: Math.min(concurrency, queue.length) },
       async () => {
-        while (queue.length) {
+        while (queue.length && !signal?.aborted) {
           const id = queue.shift();
 
           await dispatch(
             fetchVariantColorsForProduct({ productId: id, signal })
           )
-            .unwrap() // rejected olursa throw eder
+            .unwrap()
             .catch((e) => {
-              // Yalnızca iptal hatalarını sessizce geç
+              // Yalnızca iptalleri sessizce yut
               if (
                 e?.name === "CanceledError" ||
                 e?.code === "ERR_CANCELED" ||
                 e?.message === "canceled"
               ) {
-                return; // ignore
+                return;
               }
-              // Opsiyonel: loglayın (UI'ya toast yok)
               // console.debug("Variant colors failed:", id, e);
             });
         }
       }
     );
+
     await Promise.all(workers);
     return true;
   }
@@ -169,16 +172,13 @@ const bestSellersSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // list
-      .addCase(fetchBestSellers.pending, (state) => {
+      .addCase(fetchBestSellers.pending, (state, action) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(fetchBestSellers.fulfilled, (state, action) => {
         productsAdapter.setAll(state, action.payload);
         state.status = "succeeded";
-        // limit’i condition’daki key ile bağlamak için payload’ın uzunluğundan bağımsız, 8 varsayıyoruz.
-        // Daha kesin istersen thunk arg’ını meta ile taşıyabilirsin:
-        // action.meta.arg.limit
         const limit = String(action.meta.arg?.limit ?? 8);
         state.cache.metaByLimit[limit] = { fetchedAt: Date.now() };
       })
@@ -207,9 +207,19 @@ const bestSellersSlice = createSlice({
 export const { invalidate, clear } = bestSellersSlice.actions;
 export default bestSellersSlice.reducer;
 
-// ---------- Selectors
+// ---------- Selectors (TEK KEZ tanımla!)
 const baseSelectors = productsAdapter.getSelectors(
   (state) => state.bestSellers
+);
+
+// Sadece ID'ler (referans stabil)
+export const selectBestSellerIds = baseSelectors.selectIds;
+
+// Eksik renkli ürün ID'leri
+export const selectMissingColorIds = createSelector(
+  selectBestSellerIds,
+  (state) => state.bestSellers.colorsByProduct,
+  (ids, colorsByProduct) => ids.filter((id) => !colorsByProduct[id])
 );
 
 // Kartların UI’da ihtiyacı olan şekil (renklerle birleştirilmiş)
@@ -220,8 +230,6 @@ export const selectBestSellerCards = createSelector(
     products.map((p) => ({
       ...p,
       variantColors: colorsByProduct[p.id] || [],
-      // UI kolaylığı: kart burada 240×427 kullanıyor (ProductCard içinde sabit),
-      // burada başka data enrich gerekirse ekleyebilirsin.
     }))
 );
 

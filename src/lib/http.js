@@ -1,5 +1,7 @@
+// lib/http.js
 import axios from "axios";
 import { toast } from "react-toastify";
+import { readAuth } from "../utils/authStorage";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -10,8 +12,9 @@ export const http = axios.create({
 });
 
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("auth_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const { accessToken } = readAuth(); // NEW+LEGACY normalize
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+
   config.headers["Accept-Language"] = navigator.language || "tr-TR";
   try {
     config.headers["X-Timezone"] =
@@ -25,32 +28,21 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (res) => res,
   (err) => {
-    // >>> İptal edilmiş istekleri sessize al
     if (
       axios.isCancel?.(err) ||
       err?.code === "ERR_CANCELED" ||
       err?.name === "CanceledError" ||
       err?.message === "canceled"
     ) {
-      // İstersen console.debug ile logla
-      // console.debug("Request canceled:", err.config?.url);
       return Promise.reject(err);
     }
-
-    // İsteğe bağlı: çağrı bazında toast’ı kapatmak için bayrak
-    if (err?.config?._skipErrorToast) {
-      return Promise.reject(err);
+    if (!err?.config?._skipErrorToast) {
+      const apiMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err.message;
+      toast.error(apiMsg || "İstek sırasında bir hata oluştu.");
     }
-
-    const status = err?.response?.status;
-    const apiMsg =
-      err?.response?.data?.message || err?.response?.data?.error || err.message;
-
-    if (status === 401) {
-      // logout/refresh vs.
-    }
-
-    toast.error(apiMsg || "İstek sırasında bir hata oluştu.");
     return Promise.reject(err);
   }
 );

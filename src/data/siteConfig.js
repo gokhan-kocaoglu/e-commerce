@@ -66,40 +66,38 @@ export const announcements = [
   },
 ];
 
-// Basit yardımcılar
-export const getPrimaryContact = (type) =>
-  contacts.find((c) => c.type === type && c.isPrimary && c.status === "active");
-
-export const getActiveAnnouncement = (locale = "en") =>
-  announcements.find((a) => a.status === "active" && a.locale === locale);
-
-export const getActiveSocials = () =>
-  socials
-    .filter((s) => s.status === "active")
-    .sort((a, b) => a.order - b.order);
-
 //HeaderMenu Kısmı İçin
 export const siteConfig = {
-  brand: {
-    id: "bandage",
-    name: "Bandage",
-    // ileride CDN/logo yolu eklenebilir
-    logoUrl: null,
-  },
+  brand: { id: "bandage", name: "Bandage", logoUrl: null },
 
-  // Çok dillilik düşünülerek; path ve seo alanları ileride genişletilebilir
   navigation: {
     primary: [
       { id: "home", label: "Home", path: "/" },
+
       {
         id: "shop",
         label: "Shop",
         path: "/shop",
-        // dropdown (desktop) / flat list (mobile) için child'lar hazır
         children: [
-          { id: "men", label: "Men", path: "/shop/men" },
-          { id: "women", label: "Women", path: "/shop/women" },
-          { id: "kids", label: "Kids", path: "/shop/kids" },
+          // 💡 BACKEND CATEGORY UUID’LERİ—tek kaynak
+          {
+            id: "men",
+            label: "Men",
+            path: "/shop/men",
+            categoryId: "b6a4c7fc-bb03-4da9-899d-16b19ec0a99b", //buraya backend kısmındaki uuid yazılacak
+          },
+          {
+            id: "women",
+            label: "Women",
+            path: "/shop/women",
+            categoryId: "3a014ca5-ca4b-43a3-ab65-48bf26096ebd", //buraya backend kısmındaki uuid yazılacak
+          },
+          {
+            id: "kids",
+            label: "Kids",
+            path: "/shop/kids",
+            categoryId: "ea42a00e-04af-4406-b30d-691abb7317a0", //buraya backend kısmındaki uuid yazılacak
+          },
           {
             id: "electronics",
             label: "Electronics",
@@ -124,7 +122,8 @@ export const siteConfig = {
           {
             id: "accessories-jewelry",
             label: "Accessories & Jewelry",
-            path: "/shop/accessories",
+            path: "/shop/accessories-jewelry",
+            categoryId: "852fe2b5-b96c-4f44-a1d6-581f8148f712", //buraya backend kısmındaki uuid yazılacak
           },
           {
             id: "toys-hobbies",
@@ -143,6 +142,7 @@ export const siteConfig = {
           },
         ],
       },
+
       { id: "about", label: "About", path: "/about" },
       { id: "blog", label: "Blog", path: "/blog" },
       { id: "contact", label: "Contact", path: "/contact" },
@@ -157,7 +157,6 @@ export const siteConfig = {
   },
 
   headerActions: {
-    // Bu sayılar store/backend’den gelebilir; default veriyoruz
     cartCount: 1,
     wishlistCount: 1,
     routes: {
@@ -174,3 +173,15 @@ export const getBrand = () => siteConfig.brand;
 export const getPrimaryNav = () => siteConfig.navigation.primary;
 export const getAuthConfig = () => siteConfig.auth;
 export const getHeaderActions = () => siteConfig.headerActions;
+
+// Basit yardımcılar
+export const getPrimaryContact = (type) =>
+  contacts.find((c) => c.type === type && c.isPrimary && c.status === "active");
+
+export const getActiveAnnouncement = (locale = "en") =>
+  announcements.find((a) => a.status === "active" && a.locale === locale);
+
+export const getActiveSocials = () =>
+  socials
+    .filter((s) => s.status === "active")
+    .sort((a, b) => a.order - b.order);

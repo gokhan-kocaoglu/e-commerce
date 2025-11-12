@@ -1,44 +1,44 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import ProductCard from "../components/ProductCard";
+
 import {
   fetchBestSellers,
   fetchVariantColorsForList,
   selectBestSellerCards,
   selectBestSellersStatus,
   selectBestSellersError,
+  selectMissingColorIds, // <-- eklendi
 } from "../store/bestSellersSlice";
+
+import UniversalProductCard from "../components/UniversalProductCard";
 
 export default function BestSellers({ limit = 8, className = "" }) {
   const dispatch = useDispatch();
   const items = useSelector(selectBestSellerCards);
   const status = useSelector(selectBestSellersStatus);
   const error = useSelector(selectBestSellersError);
+  const missingIds = useSelector(selectMissingColorIds); // <-- eksikler
 
   useEffect(() => {
     const controller = new AbortController();
-
-    // 1) Liste (cache tazeyse condition sayesinde fetch olmaz)
+    // 1) Liste (cache taze ise condition sayesinde fetch olmaz)
     dispatch(fetchBestSellers({ limit, signal: controller.signal }));
-
     return () => controller.abort();
   }, [dispatch, limit]);
 
   useEffect(() => {
     if (status !== "succeeded") return;
+    if (!missingIds.length) return;
     const controller = new AbortController();
-    // 2) Renkler (yalnızca list geldikten sonra)
-    const ids = items.map((p) => p.id);
-    if (ids.length) {
-      dispatch(
-        fetchVariantColorsForList({
-          productIds: ids,
-          signal: controller.signal,
-        })
-      );
-    }
+    // 2) Renkler — yalnız eksikler için istek at
+    dispatch(
+      fetchVariantColorsForList({
+        productIds: missingIds,
+        signal: controller.signal,
+      })
+    );
     return () => controller.abort();
-  }, [dispatch, status, items]);
+  }, [dispatch, status, missingIds]);
 
   return (
     <section
@@ -58,7 +58,7 @@ export default function BestSellers({ limit = 8, className = "" }) {
       </div>
 
       {/* Liste — flex wrap; kart genişliği ProductCard'da sabit 240px */}
-      <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-20 lg:gap-y-[7.5rem]">
+      <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-20 lg:gap-y-[7 rem]">
         {status === "loading" &&
           Array.from({ length: limit }).map((_, i) => (
             <div key={i} className="w-[240px]" aria-hidden>
@@ -71,7 +71,12 @@ export default function BestSellers({ limit = 8, className = "" }) {
         {status === "succeeded" &&
           items.map((p) => (
             <div key={p.id} className="shrink-0 grow-0 basis-auto">
-              <ProductCard product={p} />
+              <UniversalProductCard
+                product={p}
+                fixedWidth={240}
+                imageHeight={427}
+                autoVariants={false}
+              />
             </div>
           ))}
 

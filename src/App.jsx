@@ -3,6 +3,9 @@ import Home from "./pages/Home";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Layout from "./layout/Layout";
 import CatalogPage from "./pages/CatalogPage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import AccountProfile from "./pages/AccountProfile";
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -25,6 +28,9 @@ function App() {
         <Switch>
           <Route exact path="/" component={Home} />
           <Route exact path="/shop" component={CatalogPage} />
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/register" component={Register} />
+          <Route exact path="/account/profile" component={AccountProfile} />
           {/* Shop alt kategoriler (tek seviye) */}
           <Route path="/shop/:category" component={CatalogPage} />
           {/* 2. seviye ihtiyacı olursa ekle:

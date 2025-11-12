@@ -1,57 +1,71 @@
-// src/components/shop/ShopContainer.jsx
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { buildTrailById, getRouteMetaByPath } from "../../data/navMeta";
+import { getPrimaryNav } from "../../data/siteConfig";
+
+// küçük manifest çıkarımı (breadcrumb için)
+function flatten(items, parent = null, acc = []) {
+  for (const it of items) {
+    acc.push({ ...it, parent: parent?.id || null });
+    if (it.children) flatten(it.children, it, acc);
+  }
+  return acc;
+}
+const NAV = flatten(getPrimaryNav());
+const byPath = Object.fromEntries(NAV.map((x) => [x.path, x]));
+const byId = Object.fromEntries(NAV.map((x) => [x.id, x]));
+
+function buildTrail(meta) {
+  if (!meta) return [];
+  const trail = [];
+  let cur = meta;
+  while (cur) {
+    trail.unshift(cur);
+    cur = cur.parent ? byId[cur.parent] : null;
+  }
+  return trail;
+}
 
 export default function ShopContainer({ className = "" }) {
   const { pathname } = useLocation();
-  // mevcut path’e karşılık gelen meta (örn. /shop)
-  const current = getRouteMetaByPath(pathname) ?? getRouteMetaByPath("/shop");
-  // breadcrumb: parent zinciri + current
-  const trail = current ? buildTrailById(current.id) : [];
+  const current = byPath[pathname] || byPath["/shop"];
+  const trail = buildTrail(current);
 
   return (
     <section
       className={`w-full bg-white ${className}`}
-      aria-labelledby="shop-page-heading"
+      aria-labelledby="shop-heading"
     >
-      <div className="mx-auto w-full max-w-7xl lg:px-1 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="flex flex-col items-center gap-3 py-6 md:flex-row md:items-center md:justify-between md:py-8">
-          {/* Shop başlık — h3: 24/32, 700, 0.1px, #252B42 */}
           <h3
-            id="shop-page-heading"
+            id="shop-heading"
             className="font-['Montserrat'] font-bold text-[24px] leading-[32px] tracking-[0.1px] text-[#252B42]"
           >
-            {current?.title ?? "Shop"}
+            {current?.label ?? "Shop"}
           </h3>
 
-          {/* Breadcrumb */}
-          <nav aria-label="Breadcrumb" className="flex items-center">
+          <nav aria-label="Breadcrumb">
             <ol className="flex items-center gap-2">
-              {trail.map((r, idx) => {
-                const isLast = idx === trail.length - 1;
+              {trail.map((r, i) => {
+                const last = i === trail.length - 1;
                 return (
                   <li key={r.id} className="flex items-center">
-                    {isLast ? (
+                    {last ? (
                       <span
                         className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#BDBDBD]"
                         aria-current="page"
                       >
-                        {r.breadcrumb}
+                        {r.label}
                       </span>
                     ) : (
                       <>
                         <Link
                           to={r.path}
-                          className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#252B42] hover:opacity-80 transition-opacity"
+                          className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#252B42] hover:opacity-80"
                         >
-                          {r.breadcrumb}
+                          {r.label}
                         </Link>
-                        <ChevronRight
-                          className="mx-1 h-[18px] w-[18px] text-[#BDBDBD]"
-                          strokeWidth={2}
-                          aria-hidden="true"
-                        />
+                        <ChevronRight className="mx-1 h-[18px] w-[18px] text-[#BDBDBD]" />
                       </>
                     )}
                   </li>
