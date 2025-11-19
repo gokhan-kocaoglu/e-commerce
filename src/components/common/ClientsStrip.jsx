@@ -22,7 +22,7 @@ export default function ClientsStrip({
     { id: "reddit", label: "Reddit", Icon: FaRedditAlien },
   ];
 
-  const sizePx = { sm: 28, md: 36, lg: 44 }[size] ?? 36;
+  const sizePx = { sm: 28, md: 36, lg: 100 }[size] ?? 36;
 
   return (
     <section
@@ -42,7 +42,7 @@ export default function ClientsStrip({
             aria-label={label}
             title={label}
           >
-            <Icon size={100} color={color} />
+            <Icon size={sizePx} color={color} />
           </div>
         ))}
       </div>

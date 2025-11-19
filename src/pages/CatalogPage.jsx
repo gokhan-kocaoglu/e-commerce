@@ -67,7 +67,7 @@ export default function CatalogPage() {
         sort={sort}
         view={view}
       />
-      <ClientsStrip className="mt-12" size="md" />
+      <ClientsStrip className="mt-12" size="lg" />
     </>
   );
 }
