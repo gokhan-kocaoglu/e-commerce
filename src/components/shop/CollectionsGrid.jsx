@@ -40,7 +40,9 @@ export default function CollectionsGrid({
 
   return (
     <section className={`mx-auto w-full max-w-7xl px-4 sm:px-6 ${className}`}>
-      <div className={`flex flex-wrap ${gapCls} justify-center py-6 md:py-4`}>
+      <div
+        className={`flex flex-wrap flex-col ${gapCls} justify-center px-6 py-6 md:py-4 sm:flex-row`}
+      >
         {isLoading &&
           Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className={basisCls} />
