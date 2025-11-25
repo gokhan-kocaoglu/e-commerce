@@ -6,6 +6,8 @@ import CatalogPage from "./pages/CatalogPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AccountProfile from "./pages/AccountProfile";
+import ProductDetails from "./pages/ProductDetails";
+import About from "./pages/About";
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -33,9 +35,14 @@ function App() {
           <Route exact path="/account/profile" component={AccountProfile} />
           {/* Shop alt kategoriler (tek seviye) */}
           <Route path="/shop/:category" component={CatalogPage} />
-          {/* 2. seviye ihtiyacı olursa ekle:
+          {/* 2. seviye ihtiyacı olursa böyle gelmesi gerekiyor:
              <Route path="/shop/:category/:sub" component={CatalogPage} />
           */}
+          <Route
+            path="/product/:categorySlug/:productSlug"
+            component={ProductDetails}
+          />
+          <Route path="/about" component={About} />
         </Switch>
       </Layout>
     </Router>

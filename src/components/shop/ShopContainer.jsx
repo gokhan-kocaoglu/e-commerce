@@ -1,3 +1,4 @@
+// src/components/shop/ShopContainer.jsx
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { getPrimaryNav } from "../../data/siteConfig";
@@ -25,10 +26,20 @@ function buildTrail(meta) {
   return trail;
 }
 
-export default function ShopContainer({ className = "" }) {
+export default function ShopContainer({
+  className = "",
+  heading, // <─ opsiyonel: başlığı override etmek için
+  customTrail, // <─ opsiyonel: breadcrumb’ı override etmek için
+}) {
   const { pathname } = useLocation();
+
   const current = byPath[pathname] || byPath["/shop"];
-  const trail = buildTrail(current);
+
+  // Eğer customTrail geldiyse onu kullan, yoksa eski mantık
+  const trail = customTrail?.length ? customTrail : buildTrail(current);
+
+  // Başlık da override edilebilir, yoksa yine eski mantık
+  const title = heading || current?.label || "Shop";
 
   return (
     <section
@@ -41,15 +52,16 @@ export default function ShopContainer({ className = "" }) {
             id="shop-heading"
             className="font-['Montserrat'] font-bold text-[24px] leading-[32px] tracking-[0.1px] text-[#252B42]"
           >
-            {current?.label ?? "Shop"}
+            {title}
           </h3>
 
           <nav aria-label="Breadcrumb">
             <ol className="flex items-center gap-2">
               {trail.map((r, i) => {
                 const last = i === trail.length - 1;
+                const key = r.id || r.path || r.label || i; // customTrail için fallback key
                 return (
-                  <li key={r.id} className="flex items-center">
+                  <li key={key} className="flex items-center">
                     {last ? (
                       <span
                         className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#BDBDBD]"
@@ -60,7 +72,7 @@ export default function ShopContainer({ className = "" }) {
                     ) : (
                       <>
                         <Link
-                          to={r.path}
+                          to={r.path || "#"}
                           className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#252B42] hover:opacity-80"
                         >
                           {r.label}

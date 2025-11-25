@@ -54,9 +54,9 @@ const TTL_MS = 60_000;
 // Ürünleri getir (top-bestsellers)
 export const fetchBestSellers = createAsyncThunk(
   "bestSellers/fetchList",
-  async ({ limit = 8, signal }) => {
+  async ({ limit = 8, categoryId = null, signal }) => {
     const res = await http.get("/api/catalog/products/top-bestsellers", {
-      params: { limit },
+      params: { limit, categoryId },
       signal,
       _skipErrorToast: true,
     });
@@ -76,10 +76,10 @@ export const fetchBestSellers = createAsyncThunk(
     }));
   },
   {
-    condition: ({ limit = 8 }, { getState }) => {
+    condition: ({ limit = 8, categoryId = null }, { getState }) => {
       const { bestSellers } = getState();
-      const key = String(limit);
-      const entry = bestSellers.cache.metaByLimit[key];
+      const key = `${categoryId || "ALL"}|${limit}`;
+      const entry = bestSellers.cache.metaByKey[key];
       if (!entry) return true;
       const fresh = Date.now() - entry.fetchedAt < TTL_MS;
       return !fresh;
@@ -146,11 +146,12 @@ export const fetchVariantColorsForList = createAsyncThunk(
 
 // ---------- Slice
 const initialState = productsAdapter.getInitialState({
-  status: "idle", // idle | loading | succeeded | failed
+  status: "idle",
   error: null,
   cache: {
-    metaByLimit: {}, // { "8": { fetchedAt: 123456 } }
+    metaByKey: {}, // { "ALL|8": { fetchedAt: 123456 } }
   },
+  listsByKey: {}, // { "ALL|8": { ids: [...] } }
   colorsByProduct: {}, // { [productId]: ["Black","Blue"] }
 });
 
@@ -159,12 +160,14 @@ const bestSellersSlice = createSlice({
   initialState,
   reducers: {
     invalidate(state) {
-      state.cache.metaByLimit = {};
+      state.cache.metaByKey = {};
+      state.listsByKey = {};
     },
     clear(state) {
       productsAdapter.removeAll(state);
       state.colorsByProduct = {};
-      state.cache.metaByLimit = {};
+      state.cache.metaByKey = {};
+      state.listsByKey = {};
       state.status = "idle";
       state.error = null;
     },
@@ -172,15 +175,21 @@ const bestSellersSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // list
-      .addCase(fetchBestSellers.pending, (state, action) => {
+      .addCase(fetchBestSellers.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(fetchBestSellers.fulfilled, (state, action) => {
-        productsAdapter.setAll(state, action.payload);
+        const { limit = 8, categoryId = null } = action.meta.arg || {};
+        const key = `${categoryId || "ALL"}|${limit}`;
+
+        productsAdapter.upsertMany(state, action.payload);
         state.status = "succeeded";
-        const limit = String(action.meta.arg?.limit ?? 8);
-        state.cache.metaByLimit[limit] = { fetchedAt: Date.now() };
+
+        state.cache.metaByKey[key] = { fetchedAt: Date.now() };
+        state.listsByKey[key] = {
+          ids: action.payload.map((p) => p.id),
+        };
       })
       .addCase(fetchBestSellers.rejected, (state, action) => {
         // İptaller hataya sayılmaz
@@ -224,13 +233,18 @@ export const selectMissingColorIds = createSelector(
 
 // Kartların UI’da ihtiyacı olan şekil (renklerle birleştirilmiş)
 export const selectBestSellerCards = createSelector(
-  baseSelectors.selectAll,
-  (state) => state.bestSellers.colorsByProduct,
-  (products, colorsByProduct) =>
-    products.map((p) => ({
-      ...p,
-      variantColors: colorsByProduct[p.id] || [],
-    }))
+  (state) => state.bestSellers,
+  (state, categoryId = null) => categoryId,
+  (state, categoryId, limit = 8) => limit,
+  (slice, categoryId, limit) => {
+    const key = `${categoryId || "ALL"}|${limit}`;
+    const ids = slice.listsByKey[key]?.ids || [];
+
+    return ids.map((id) => ({
+      ...slice.entities[id],
+      variantColors: slice.colorsByProduct[id] || [],
+    }));
+  }
 );
 
 // Basit yardımcılar

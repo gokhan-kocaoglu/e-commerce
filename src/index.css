@@ -44,3 +44,36 @@
     @apply font-['Montserrat'] font-normal text-[30px] leading-[45px] tracking-[0.2px] text-center text-[#737373];
   }
 }
+
+@layer utilities {
+  /* Dış sarmalayıcı: pozisyon referansı + gölgeyi taşıyan eleman */
+  .img-shadow-l-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Asıl img */
+  .img-shadow-l {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    border-radius: 5px;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Gölge: img ile aynı hizadan başlar, sağa ve alta taşar */
+  .img-shadow-l-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    top: 0;
+    left: 6px;
+    right: -12px; /* sağa ne kadar taşsın */
+    bottom: -12px; /* alta ne kadar taşsın */
+    border-radius: 5px;
+    background: #c4c4c433;
+    z-index: 0;
+  }
+}

@@ -1,19 +1,40 @@
-// src/components/common/UniversalProductCard.jsx
 import { Link } from "react-router-dom";
 import { useVariantColors } from "../queries/variantQueries";
 
-// helpers (kısaltılmış)
+// helpers
 const normMoney = (v, cur = "USD") =>
   typeof v === "number" ? { amount: v, currency: cur } : v || null;
-const resolveCategoryFromSlug = (slug) => {
-  if (!slug) return null;
-  const seg = String(slug).split("/")[0]?.trim();
-  if (!seg) return null;
+
+const parseProductSlug = (slug) => {
+  if (!slug) return { categorySlug: null, productSlug: null };
+
+  const parts = String(slug).split("/").filter(Boolean);
+
+  // Eski veri yapıları için: sadece ürün slug'ı geldiyse
+  if (parts.length === 1) {
+    return {
+      categorySlug: null,
+      productSlug: parts[0],
+    };
+  }
+
+  const [categorySlug, ...rest] = parts;
   return {
-    label: seg.charAt(0).toUpperCase() + seg.slice(1),
-    path: `/shop/${seg}`,
+    categorySlug,
+    productSlug: rest.join("/"), // ileride ürün slug'ında "/" olursa da bozulmaz
   };
 };
+
+const resolveCategoryFromSlug = (slug) => {
+  const { categorySlug } = parseProductSlug(slug);
+  if (!categorySlug) return null;
+
+  return {
+    label: categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1),
+    path: `/shop/${categorySlug}`,
+  };
+};
+
 const pickHexFromName = (name) => {
   const s = (name || "").toLowerCase();
   let h = 0;
@@ -23,6 +44,7 @@ const pickHexFromName = (name) => {
     b = 80 + ((h >> 14) & 0x7f);
   return `rgb(${r},${g},${b})`;
 };
+
 const toCssColor = (token) => {
   if (!token) return null;
   const t = String(token).trim();
@@ -32,6 +54,7 @@ const toCssColor = (token) => {
     return t;
   return pickHexFromName(t);
 };
+
 const formatMoney = (amt, cur = "USD") =>
   amt == null ? "" : `${amt.toFixed(2)} ${cur}`;
 
@@ -45,7 +68,11 @@ export default function UniversalProductCard({
   // --- Varyant kontrolü ---
   autoVariants = true, // initial yoksa lazy fetch
 }) {
+  // 🔹 slug'ı tek sefer parse edelim
+  const { categorySlug, productSlug } = parseProductSlug(product?.slug);
+  // 🔹 kategori objesini çıkaralım (label + /shop path)
   const category = resolveCategoryFromSlug(product?.slug);
+
   const price = normMoney(product?.price);
   const compare = normMoney(product?.compareAtPrice, price?.currency);
   const initialColors = product?.variantColors || [];
@@ -63,7 +90,13 @@ export default function UniversalProductCard({
     <div className={`flex flex-col items-center ${className}`} style={wStyle}>
       {/* IMG */}
       <Link
-        to={`/product/${product?.slug}`}
+        to={{
+          pathname:
+            categorySlug && productSlug
+              ? `/product/${categorySlug}/${productSlug}`
+              : `/product/${product?.slug}`,
+          search: product?.id ? `?id=${product.id}` : "",
+        }}
         aria-label={product?.title}
         className="block w-full"
       >
@@ -92,10 +125,11 @@ export default function UniversalProductCard({
           {product?.title}
         </h5>
 
+        {/* 🔹 Burası yeniden çalışıyor */}
         {category && (
           <Link
             to={category.path}
-            className="mt-1 inline-block font-['Montserrat'] text-[14px] font-bold leading-6 tracking-[0.2px] text-[#737373] hover:underline"
+            className="mt-1 inline-block font-['Montserrat'] text-[14px] font-bold leading-[24px] tracking-[0.2px] text-[#737373] hover:underline"
           >
             {category.label}
           </Link>

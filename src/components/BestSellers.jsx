@@ -1,3 +1,4 @@
+// src/components/BestSellers.jsx
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -7,30 +8,42 @@ import {
   selectBestSellerCards,
   selectBestSellersStatus,
   selectBestSellersError,
-  selectMissingColorIds, // <-- eklendi
+  selectMissingColorIds,
 } from "../store/bestSellersSlice";
 
 import UniversalProductCard from "../components/UniversalProductCard";
 
-export default function BestSellers({ limit = 8, className = "" }) {
+export default function BestSellers({
+  limit = 8,
+  categoryId = null,
+  className = "",
+  variant = "home", // "home" | "category"
+}) {
   const dispatch = useDispatch();
-  const items = useSelector(selectBestSellerCards);
+  const items = useSelector((state) =>
+    selectBestSellerCards(state, categoryId, limit)
+  );
   const status = useSelector(selectBestSellersStatus);
   const error = useSelector(selectBestSellersError);
   const missingIds = useSelector(selectMissingColorIds); // <-- eksikler
 
   useEffect(() => {
     const controller = new AbortController();
-    // 1) Liste (cache taze ise condition sayesinde fetch olmaz)
-    dispatch(fetchBestSellers({ limit, signal: controller.signal }));
+    dispatch(
+      fetchBestSellers({
+        limit,
+        categoryId,
+        signal: controller.signal,
+      })
+    );
     return () => controller.abort();
-  }, [dispatch, limit]);
+  }, [dispatch, limit, categoryId]);
 
   useEffect(() => {
     if (status !== "succeeded") return;
     if (!missingIds.length) return;
     const controller = new AbortController();
-    // 2) Renkler — yalnız eksikler için istek at
+
     dispatch(
       fetchVariantColorsForList({
         productIds: missingIds,
@@ -40,11 +53,12 @@ export default function BestSellers({ limit = 8, className = "" }) {
     return () => controller.abort();
   }, [dispatch, status, missingIds]);
 
-  return (
-    <section
-      className={`mx-auto w-full max-w-7xl px-4 py-12 md:py-16 ${className}`}
-    >
-      {/* Başlıklar */}
+  // 🔹 Header varyantı
+  let header = null;
+
+  if (variant === "home") {
+    // Eski davranış: ortalanmış 3 satır
+    header = (
       <div className="mx-auto max-w-[260px] lg:max-w-2xl text-center pb-8">
         <h4 className="font-['Montserrat'] text-[20px] font-normal leading-[30px] tracking-[0.2px] text-[#737373]">
           Featured Products
@@ -56,9 +70,27 @@ export default function BestSellers({ limit = 8, className = "" }) {
           Problems trying to resolve the conflict between
         </p>
       </div>
+    );
+  } else if (variant === "category") {
+    // Kategori detayında: sadece BESTSELLER PRODUCTS, sola yaslı
+    header = (
+      <div className="pb-8 px-24 flex justify-start flex-wrap">
+        <h3 className="font-['Montserrat'] text-[24px] font-bold leading-8 tracking-[0.1px] text-[#252B42]">
+          BESTSELLER PRODUCTS
+        </h3>
+        <hr className="mt-4 w-full border-t border-[#E4E4E4]" />
+      </div>
+    );
+  }
+
+  return (
+    <section
+      className={`mx-auto w-full max-w-7xl px-4 py-12 md:py-16 ${className}`}
+    >
+      {header}
 
       {/* Liste — flex wrap; kart genişliği ProductCard'da sabit 240px */}
-      <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-20 lg:gap-y-[7 rem]">
+      <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-20 lg:gap-y-[7rem]">
         {status === "loading" &&
           Array.from({ length: limit }).map((_, i) => (
             <div key={i} className="w-[240px]" aria-hidden>

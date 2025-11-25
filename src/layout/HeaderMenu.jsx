@@ -2,6 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useHistory } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAuth, logoutThunk } from "../store/authSlice";
+import {
+  selectWishlistItems,
+  toggleWishlistItem,
+} from "../store/wishlistSlice";
 
 import {
   User,
@@ -20,17 +24,33 @@ import {
   getHeaderActions,
 } from "../data/siteConfig";
 
+const formatMoney = (m) =>
+  !m || m.amount == null ? "" : `${m.amount.toFixed(2)} ${m.currency || "USD"}`;
+
+const getProductUrlFromItem = (item) => {
+  if (!item?.slug || !item?.id) return "/shop";
+  const [categorySlug, productSlug] = String(item.slug).split("/");
+  if (!categorySlug || !productSlug) return "/shop";
+  return `/product/${categorySlug}/${productSlug}?id=${item.id}`;
+};
+
 export default function Header({ className = "" }) {
   const history = useHistory();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+
   // DEĞİŞİKLİK: ref’i ikiye ayırdık; tek ref iki farklı yerde kullanılıyordu.
   const accountRefAuth = useRef(null);
   const accountRefGuest = useRef(null);
   const [openMobileSub, setOpenMobileSub] = useState(null);
+  const [wishlistOpen, setWishlistOpen] = useState(false); // Açılır menü
+  const wishlistRef = useRef(null); // Açılır menü referansı
 
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector(selectAuth) ?? {};
+
+  const wishlistItems = useSelector(selectWishlistItems);
+  const wishlistCount = wishlistItems.length;
 
   const handleLogout = async () => {
     try {
@@ -56,7 +76,13 @@ export default function Header({ className = "" }) {
       // DEĞİŞİKLİK: iki ref’in de dışına tıklamayı kapat
       const inAuth = accountRefAuth.current?.contains(e.target);
       const inGuest = accountRefGuest.current?.contains(e.target);
-      if (!inAuth && !inGuest) setAccountOpen(false);
+      const inWishlist = wishlistRef.current?.contains(e.target);
+      if (!inAuth && !inGuest) {
+        setAccountOpen(false);
+      }
+      if (!inWishlist) {
+        setWishlistOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -292,18 +318,144 @@ export default function Header({ className = "" }) {
           </Link>
 
           {/* Wishlist */}
-          <Link
-            to={actions.routes.wishlist}
-            aria-label="Wishlist"
-            className="relative icon-wrap"
-          >
-            <Heart className="h-6 w-6 md:h-4 md:w-4 block text-black md:text-[#23A6F0]" />
-            {actions.wishlistCount > 0 && (
-              <span className="absolute -right-4 top-2 px-1 md:top-2 md:px-3 small">
-                {actions.wishlistCount}
-              </span>
-            )}
-          </Link>
+          <div className="relative" ref={wishlistRef}>
+            <button
+              type="button"
+              aria-label="Wishlist"
+              onClick={() => setWishlistOpen((s) => !s)}
+              className="relative icon-wrap"
+            >
+              <Heart className="h-6 w-6 md:h-4 md:w-4 block text-black md:text-[#23A6F0]" />
+              {wishlistCount > 0 && (
+                <span className="absolute -right-4 top-2 px-1 md:top-2 md:px-3 small">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
+            {/* Panel */}
+            <div
+              className={`absolute right-0 mt-2 w-[320px] max-w-[calc(100vw-2rem)]
+      rounded-2xl surface-popover elev-3 z-30
+      px-3 py-3 origin-top-right
+      transition duration-150 ease-out
+      ${
+        wishlistOpen
+          ? "opacity-100 visible translate-y-0 scale-100"
+          : "opacity-0 invisible -translate-y-1 scale-95"
+      }`}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                  Favorites
+                </span>
+                {wishlistCount > 0 && (
+                  <span className="text-xs text-zinc-400">
+                    {wishlistCount} item{wishlistCount > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              {/* BOŞ STATE */}
+              {wishlistCount === 0 && (
+                <div className="py-6 text-center">
+                  <p className="font-['Montserrat'] text-[13px] leading-[20px] tracking-[0.2px] text-[#737373]">
+                    There are currently no products in your favorites.
+                  </p>
+                </div>
+              )}
+
+              {/* LİSTE */}
+              {wishlistCount > 0 && (
+                <ul className="max-h-96 overflow-y-auto">
+                  {wishlistItems.map((item, idx) => {
+                    const href = getProductUrlFromItem(item);
+
+                    const handleRemove = () => {
+                      // item shape’i wishlistSlice'a push ettiğin ile aynı
+                      dispatch(toggleWishlistItem(item));
+                    };
+
+                    const handleAddToCart = () => {
+                      // 🔹 Burayı kendi cartSlice’ına göre uyarlayacaksın
+                      // örn: dispatch(addToCart({ productId: item.id, quantity: 1 }))
+                      console.log("Sepete ekle:", item);
+                    };
+
+                    return (
+                      <li key={item.id} className="py-3">
+                        <div className="flex gap-3">
+                          {/* Thumbnail */}
+                          {item.thumbnailUrl ? (
+                            <Link
+                              to={href}
+                              className="block h-16 w-16 shrink-0 overflow-hidden rounded bg-zinc-100"
+                            >
+                              <img
+                                src={item.thumbnailUrl}
+                                alt={item.title}
+                                className="h-full w-full object-cover object-center"
+                              />
+                            </Link>
+                          ) : (
+                            <Link
+                              to={href}
+                              className="block h-16 w-16 shrink-0 rounded bg-zinc-100"
+                            />
+                          )}
+
+                          {/* Info + actions */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <Link
+                                to={href}
+                                className="line-clamp-2 text-sm font-semibold text-[#252B42]"
+                              >
+                                {item.title}
+                              </Link>
+
+                              <button
+                                type="button"
+                                onClick={handleRemove}
+                                className="ml-1 text-xs text-zinc-400 hover:text-zinc-600"
+                                aria-label="Remove from wishlist"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            <div className="mt-1 text-xs font-medium text-[#23A6F0]">
+                              {formatMoney(item.price)}
+                              {item.compareAtPrice?.amount != null &&
+                                item.compareAtPrice.amount >
+                                  item.price?.amount && (
+                                  <span className="ml-1 text-[11px] text-[#BDBDBD] line-through">
+                                    {formatMoney(item.compareAtPrice)}
+                                  </span>
+                                )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleAddToCart}
+                              className="mt-2 inline-flex h-8 items-center justify-center rounded-[4px] bg-[#23A6F0] px-3 text-[11px] font-['Montserrat'] font-bold leading-[16px] tracking-[0.2px] text-white hover:bg-[#1b87cc]"
+                            >
+                              Add to cart
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Alt çizgi (son eleman hariç) */}
+                        {idx < wishlistItems.length - 1 && (
+                          <hr className="mt-3 border-t border-[#E4E4E4]" />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
 
           {/* Mobile menu toggle */}
           <button

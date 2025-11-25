@@ -103,7 +103,7 @@ export default function Home() {
 
       {/* Diğer bölümler */}
       <EditorsPick />
-      <BestSellers />
+      <BestSellers limit={8} />
 
       {/* PROMO: BE’den gelen kampanyalar */}
       <StatusGate

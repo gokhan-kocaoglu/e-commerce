@@ -3,6 +3,7 @@ import announcementReducer from "./announcementSlice";
 import bestSellersReducer from "./bestSellersSlice";
 import promoReducer from "./promoSliderSlice";
 import authReducer from "./authSlice";
+import wishlistReducer from "./wishlistSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     bestSellers: bestSellersReducer,
     promo: promoReducer,
     auth: authReducer,
+    wishlist: wishlistReducer,
     // diğer slice'lar...
   },
 });
