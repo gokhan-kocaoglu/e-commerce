@@ -8,6 +8,8 @@ import Register from "./pages/Register";
 import AccountProfile from "./pages/AccountProfile";
 import ProductDetails from "./pages/ProductDetails";
 import About from "./pages/About";
+import Pricing from "./pages/Pricing";
+import Team from "./pages/Team";
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -43,6 +45,8 @@ function App() {
             component={ProductDetails}
           />
           <Route path="/about" component={About} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/team" component={Team} />
         </Switch>
       </Layout>
     </Router>

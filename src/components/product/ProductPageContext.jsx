@@ -1,6 +1,6 @@
 // src/context/ProductPageContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchProductPageBundle } from "../services/productService";
+import { fetchProductPageBundle } from "../../services/productService";
 
 const ProductPageContext = createContext(null);
 

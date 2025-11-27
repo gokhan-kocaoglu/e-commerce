@@ -88,7 +88,11 @@ export default function Footer({ className = "" }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <Icon size={24} strokeWidth={2.5} />
+                  <Icon
+                    className="text-[#23A6F0]"
+                    size={24}
+                    strokeWidth={2.5}
+                  />
                 </a>
               );
             })}

@@ -49,7 +49,7 @@ export default function AboutTeamSection({ className = "" }) {
                     src={member.avatar.src}
                     alt={member.avatar.alt}
                     loading="lazy"
-                    className="h-full w-full object-cover"
+                    className="h-60 w-full object-cover"
                   />
                 )}
               </div>

@@ -53,6 +53,14 @@ export const socials = [
     order: 4,
     status: "active",
   },
+  {
+    id: "li",
+    platform: "linkedin",
+    handle: "shop",
+    url: "https://linkedin.com//",
+    order: 5,
+    status: "active",
+  },
 ];
 
 export const announcements = [
@@ -144,9 +152,9 @@ export const siteConfig = {
       },
 
       { id: "about", label: "About", path: "/about" },
-      { id: "blog", label: "Blog", path: "/blog" },
+      { id: "pricing", label: "Pricing", path: "/pricing" },
       { id: "contact", label: "Contact", path: "/contact" },
-      { id: "pages", label: "Pages", path: "/pages" },
+      { id: "team", label: "Team", path: "/team" },
     ],
   },
 

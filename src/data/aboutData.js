@@ -133,6 +133,35 @@ const aboutPage = {
       },
     ],
   },
+
+  clientsSection: {
+    id: "about-clients",
+    title: "Big Companies Are Here",
+    subtitle:
+      "Problems trying to resolve the conflict between the two major realms of Classical physics: Newtonian mechanics",
+
+    // Sadece desktop layout için satır kırıklı versiyon
+    subtitleDesktop: [
+      "Problems trying to resolve the conflict between",
+      "the two major realms of Classical physics: Newtonian mechanics",
+    ],
+  },
+
+  workWithUsSection: {
+    id: "about-work-with-us",
+    eyebrow: "WORK WITH US",
+    title: "Now Let’s grow Yours",
+    description:
+      "The gradual accumulation of information about atomic and small-scale behavior during the first quarter of the 20th",
+    primaryAction: {
+      label: "Button",
+      href: "#",
+    },
+    image: {
+      src: "/assets/about/work-with-us.png",
+      alt: "Woman",
+    },
+  },
 };
 
 export function getAboutPage(locale = "en") {
@@ -159,6 +188,14 @@ export function getAboutVideo(locale = "en") {
 
 export function getAboutTeam(locale = "en") {
   return getAboutPage(locale).teamSection;
+}
+
+export function getAboutClients(locale = "en") {
+  return getAboutPage(locale).clientsSection;
+}
+
+export function getAboutWorkWithUs(locale = "en") {
+  return getAboutPage(locale).workWithUsSection;
 }
 
 export default aboutPage;
