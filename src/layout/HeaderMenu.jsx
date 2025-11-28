@@ -2,10 +2,17 @@ import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useHistory } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAuth, logoutThunk } from "../store/authSlice";
+import { clearCart } from "../store/cartSlice";
 import {
   selectWishlistItems,
   toggleWishlistItem,
 } from "../store/wishlistSlice";
+
+import {
+  selectCartItems,
+  selectCartCount,
+  removeItem as removeCartItem,
+} from "../store/cartSlice";
 
 import {
   User,
@@ -46,18 +53,26 @@ export default function Header({ className = "" }) {
   const [wishlistOpen, setWishlistOpen] = useState(false); // Açılır menü
   const wishlistRef = useRef(null); // Açılır menü referansı
 
+  const cartRef = useRef(null);
+  const [cartOpen, setCartOpen] = useState(false);
+
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector(selectAuth) ?? {};
 
   const wishlistItems = useSelector(selectWishlistItems);
   const wishlistCount = wishlistItems.length;
 
+  const cartItems = useSelector(selectCartItems);
+  const cartCount = useSelector(selectCartCount);
+
   const handleLogout = async () => {
     try {
       await dispatch(logoutThunk()).unwrap();
     } finally {
+      // 🔹 Guest'e döndüğü an localStorage cart'ı sıfırla
+      dispatch(clearCart());
       setAccountOpen(false);
-      history.replace("/"); // logout sonrası Home'a
+      history.replace("/");
     }
   };
 
@@ -77,12 +92,14 @@ export default function Header({ className = "" }) {
       const inAuth = accountRefAuth.current?.contains(e.target);
       const inGuest = accountRefGuest.current?.contains(e.target);
       const inWishlist = wishlistRef.current?.contains(e.target);
+      const inCart = cartRef.current?.contains(e.target);
       if (!inAuth && !inGuest) {
         setAccountOpen(false);
       }
       if (!inWishlist) {
         setWishlistOpen(false);
       }
+      if (!inCart) setCartOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -92,6 +109,8 @@ export default function Header({ className = "" }) {
   const nav = getPrimaryNav();
   const auth = getAuthConfig();
   const actions = getHeaderActions();
+  const cartRoute = actions.routes.cart || "/cart";
+  const checkoutRoute = actions.routes.checkout || "/checkout";
 
   return (
     <header className={`w-full border-b border-zinc-100 ${className}`}>
@@ -304,18 +323,166 @@ export default function Header({ className = "" }) {
           </Link>
 
           {/* Cart */}
-          <Link
-            to={actions.routes.cart}
-            aria-label="Cart"
-            className="relative icon-wrap"
-          >
-            <ShoppingCart className="h-6 w-6 md:h-4 md:w-4 block text-black md:text-[#23A6F0]" />
-            {actions.cartCount > 0 && (
-              <span className="absolute -right-4 top-2 px-1 md:top-2 md:px-3 small">
-                {actions.cartCount}
-              </span>
-            )}
-          </Link>
+          <div className="relative" ref={cartRef}>
+            <button
+              type="button"
+              aria-label="Cart"
+              onClick={() => setCartOpen((s) => !s)}
+              className="relative icon-wrap"
+            >
+              <ShoppingCart className="h-6 w-6 md:h-4 md:w-4 block text-black md:text-[#23A6F0]" />
+              {cartCount > 0 && (
+                <span className="absolute -right-4 top-2 px-1 md:top-2 md:px-3 small">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            <div
+              className={`absolute right-0 mt-2 w-[340px] max-w-[calc(100vw-2rem)]
+      rounded-2xl surface-popover elev-3 z-30
+      px-3 py-3 origin-top-right
+      transition duration-150 ease-out
+      ${
+        cartOpen
+          ? "opacity-100 visible translate-y-0 scale-100"
+          : "opacity-0 invisible -translate-y-1 scale-95"
+      }`}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                  My Cart
+                </span>
+                {cartCount > 0 && (
+                  <span className="text-xs text-zinc-400">
+                    ({cartCount} item{cartCount !== 1 ? "s" : ""})
+                  </span>
+                )}
+              </div>
+
+              {/* BOŞ STATE */}
+              {cartCount === 0 && (
+                <div className="py-6 text-center">
+                  <p className="font-['Montserrat'] text-[13px] leading-[20px] tracking-[0.2px] text-[#737373]">
+                    Your cart is currently empty.
+                  </p>
+                </div>
+              )}
+
+              {/* LİSTE */}
+              {cartCount > 0 && (
+                <>
+                  <ul className="max-h-96 overflow-y-auto">
+                    {cartItems.map((item, idx) => {
+                      const href = getProductUrlFromItem(item);
+                      const qty = item.quantity || 1;
+
+                      const handleRemove = () => {
+                        dispatch(removeCartItem(item.variantId));
+                      };
+
+                      return (
+                        <li key={item.variantId} className="py-3">
+                          <div className="flex gap-3">
+                            {/* Thumbnail */}
+                            {item.thumbnailUrl ? (
+                              <Link
+                                to={href}
+                                className="block h-16 w-16 shrink-0 overflow-hidden rounded bg-zinc-100"
+                              >
+                                <img
+                                  src={item.thumbnailUrl}
+                                  alt={item.title}
+                                  className="h-full w-full object-cover object-center"
+                                />
+                              </Link>
+                            ) : (
+                              <Link
+                                to={href}
+                                className="block h-16 w-16 shrink-0 rounded bg-zinc-100"
+                              />
+                            )}
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <Link
+                                  to={href}
+                                  className="line-clamp-2 text-sm font-semibold text-[#252B42]"
+                                >
+                                  {item.title}
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={handleRemove}
+                                  className="ml-1 text-xs text-zinc-400 hover:text-zinc-600"
+                                  aria-label="Remove from cart"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              {/* Variant bilgisi */}
+                              <p className="mt-1 text-[11px] text-[#737373]">
+                                {item.size && (
+                                  <>
+                                    Size:{" "}
+                                    <span className="font-medium">
+                                      {item.size}
+                                    </span>
+                                  </>
+                                )}
+                                {item.color && (
+                                  <>
+                                    {" "}
+                                    &nbsp; Color:{" "}
+                                    <span className="font-medium">
+                                      {item.color}
+                                    </span>
+                                  </>
+                                )}
+                                {"  "}
+                                <span className="ml-2">
+                                  Qty:{" "}
+                                  <span className="font-medium">{qty}</span>
+                                </span>
+                              </p>
+
+                              <div className="mt-1 text-sm font-semibold text-[#23A6F0]">
+                                {formatMoney(item.price)}
+                              </div>
+                            </div>
+                          </div>
+
+                          {idx < cartItems.length - 1 && (
+                            <hr className="mt-3 border-t border-[#E4E4E4]" />
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Footer butonları */}
+                  <div className="mt-3 border-t border-[#E4E4E4] pt-3 flex gap-2">
+                    <Link
+                      to={cartRoute}
+                      onClick={() => setCartOpen(false)}
+                      className="flex-1 h-9 inline-flex items-center justify-center rounded-[4px] border border-[#23A6F0] bg-white text-[12px] font-['Montserrat'] font-semibold leading-[18px] tracking-[0.2px] text-[#23A6F0] hover:bg-[#23A6F0]/5"
+                    >
+                      Go to cart
+                    </Link>
+                    <Link
+                      to={checkoutRoute}
+                      onClick={() => setCartOpen(false)}
+                      className="flex-1 h-9 inline-flex items-center justify-center rounded-[4px] bg-[#F2994A] text-[12px] font-['Montserrat'] font-bold leading-[18px] tracking-[0.2px] text-white hover:bg-[#d67f35]"
+                    >
+                      Checkout
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Wishlist */}
           <div className="relative" ref={wishlistRef}>

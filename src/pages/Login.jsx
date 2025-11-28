@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { loginThunk, selectAuth } from "../store/authSlice";
 import { useHistory } from "react-router-dom";
+import { syncCartOnLogin } from "../store/cartSlice";
 
 export default function Example() {
   const dispatch = useDispatch();
@@ -30,8 +31,13 @@ export default function Example() {
   const onSubmit = async (values) => {
     const { email, password, remember } = values;
     try {
+      // 1) Login
       await dispatch(loginThunk({ email, password, remember })).unwrap();
-      // unwrap success → history.replace("/") zaten effect’te
+
+      // 2) Login sonrası sepet senkronu:
+      //    - Eğer BE sepeti boşsa ve local doluysa -> local BE'ye taşınır
+      //    - En sonunda BE'den çekilip redux+localStorage BE ile eşitlenir
+      await dispatch(syncCartOnLogin()).unwrap();
     } catch {
       setError("password", {
         type: "server",
@@ -132,7 +138,7 @@ export default function Example() {
             <input
               type="password"
               placeholder="Password"
-              className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w-full h-full"
+              className="bg-transparent text-gray-500/80 placeholder-gray-500/80 outline-none text-sm w/full h-full"
               required
               {...register("password", {
                 required: "Password is required",

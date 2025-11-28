@@ -4,6 +4,7 @@ import bestSellersReducer from "./bestSellersSlice";
 import promoReducer from "./promoSliderSlice";
 import authReducer from "./authSlice";
 import wishlistReducer from "./wishlistSlice";
+import cartReducer from "./cartSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     promo: promoReducer,
     auth: authReducer,
     wishlist: wishlistReducer,
+    cart: cartReducer,
     // diğer slice'lar...
   },
 });

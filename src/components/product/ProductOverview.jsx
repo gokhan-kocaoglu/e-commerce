@@ -1,15 +1,19 @@
-// src/components/product/ProductOverview.jsx
 import { useMemo, useState } from "react";
 import { Star, Heart, ShoppingCart, Eye } from "lucide-react";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import prevArrow from "../../assets/slider/carousel-control-prev.png";
 import nextArrow from "../../assets/slider/carousel-control-next.png";
 import { useProductPage } from "../product/ProductPageContext";
+
 import { useDispatch, useSelector } from "react-redux";
 import {
   toggleWishlistItem,
   selectIsInWishlist,
 } from "../../store/wishlistSlice";
+
+import { addItem as addCartItem } from "../../store/cartSlice";
+import { selectAuth } from "../../store/authSlice";
+import { http } from "../../lib/http";
 import { toast } from "react-toastify";
 
 // --- Helpers ---
@@ -32,41 +36,10 @@ export default function ProductOverview() {
   const [selectedColor, setSelectedColor] = useState("");
 
   const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(selectAuth) ?? {};
   const isInWishlist = useSelector((state) =>
     selectIsInWishlist(state, product?.id)
   );
-
-  const handleToggleWishlist = () => {
-    if (!product) return;
-
-    const mainImage = product.images?.[0];
-    const mainSrc = normalizeImageUrl(mainImage?.url);
-
-    const wasInWishlist = isInWishlist;
-
-    dispatch(
-      toggleWishlistItem({
-        id: product.id,
-        title: product.title,
-        slug: product.slug,
-        price: product.price,
-        compareAtPrice: product.compareAtPrice,
-        thumbnailUrl: product.thumbnailUrl || mainSrc || null,
-      })
-    );
-
-    if (wasInWishlist) {
-      toast.info("The product has been removed from your favorites.", {
-        autoClose: 2000,
-        hideProgressBar: true,
-      });
-    } else {
-      toast.success("The product has been added to your favorites.", {
-        autoClose: 2000,
-        hideProgressBar: true,
-      });
-    }
-  };
 
   // --- Variant derived state ---
   const uniqueSizes = useMemo(() => {
@@ -118,6 +91,97 @@ export default function ProductOverview() {
     return Array.from(set);
   }, [variants]);
 
+  // --- Wishlist toggle ---
+  const handleToggleWishlist = () => {
+    if (!product) return;
+
+    const mainImage = product.images?.[0];
+    const mainSrc = normalizeImageUrl(mainImage?.url);
+    const wasInWishlist = isInWishlist;
+
+    dispatch(
+      toggleWishlistItem({
+        id: product.id,
+        title: product.title,
+        slug: product.slug,
+        price: product.price,
+        compareAtPrice: product.compareAtPrice,
+        thumbnailUrl: product.thumbnailUrl || mainSrc || null,
+      })
+    );
+
+    if (wasInWishlist) {
+      toast.info("The product has been removed from your favorites.", {
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    } else {
+      toast.success("The product has been added to your favorites.", {
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    }
+  };
+
+  // --- Add to cart ---
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    // ürün varyantlı ise mutlaka variant seçilsin
+    if (variants.length > 0 && !activeVariant) {
+      setShowOptions(true);
+      toast.warn("Please select size / color before adding to cart.", {
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+      return;
+    }
+
+    const variant = activeVariant || variants[0] || null;
+    if (!variant) {
+      // burada hiç variant yoksa BE tarafınızda farklı bir model olabilir;
+      // şimdilik güvenlik için çıkıyoruz
+      toast.error("This product cannot be added to cart.");
+      return;
+    }
+
+    const mainImage = product.images?.[0];
+    const mainSrc = normalizeImageUrl(mainImage?.url);
+
+    const cartPayload = {
+      variantId: variant.id,
+      productId: product.id,
+      title: product.title,
+      slug: product.slug,
+      price: variant.priceCents || product.price,
+      compareAtPrice: variant.compareAtPriceCents || product.compareAtPrice,
+      quantity: 1,
+      size: variant.attributes?.size || selectedSize || null,
+      color: variant.attributes?.color || selectedColor || null,
+      thumbnailUrl: product.thumbnailUrl || mainSrc || null,
+    };
+
+    try {
+      // Login ise BE'ye de yaz
+      if (isAuthenticated) {
+        await http.post("/api/cart/items", {
+          variantId: variant.id,
+          quantity: 1,
+        });
+      }
+
+      // Her durumda local cart + redux güncelle
+      dispatch(addCartItem(cartPayload));
+
+      toast.success("The product has been added to your cart.", {
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    } catch {
+      // error toast'u http interceptor zaten basıyor
+    }
+  };
+
   // --- UI States ---
   if (status === "loading" || status === "idle") {
     return (
@@ -165,7 +229,6 @@ export default function ProductOverview() {
               src={prevArrow}
               alt="Previous image"
               className="absolute left-4 top-1/2 -translate-y-1/2 w-[24px] h-[44px] cursor-pointer select-none"
-              // onClick={handlePrev} // ileride slider logic’i için
             />
 
             {/* Sağ ok PNG */}
@@ -173,7 +236,6 @@ export default function ProductOverview() {
               src={nextArrow}
               alt="Next image"
               className="absolute right-4 top-1/2 -translate-y-1/2 w-[24px] h-[44px] cursor-pointer select-none"
-              // onClick={handleNext}
             />
           </div>
 
@@ -295,12 +357,16 @@ export default function ProductOverview() {
                 stroke={isInWishlist ? "#23A6F0" : "#252B42"}
               />
             </button>
+
+            {/* ADD TO CART */}
             <button
               type="button"
+              onClick={handleAddToCart}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E4E4] text-[#252B42] hover:bg-zinc-50"
             >
               <ShoppingCart className="h-4 w-4" />
             </button>
+
             <button
               type="button"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E4E4] text-[#252B42] hover:bg-zinc-50"
@@ -336,7 +402,7 @@ export default function ProductOverview() {
                 </div>
               )}
 
-              {/* Color seçimi (seçilen bedene göre filtrelenmiş) */}
+              {/* Color seçimi */}
               {selectedSize && colorsForSelectedSize.length > 0 && (
                 <div className="mt-4">
                   <div className="mb-2 flex items-center justify-between">
