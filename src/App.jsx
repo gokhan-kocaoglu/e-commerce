@@ -10,6 +10,7 @@ import ProductDetails from "./pages/ProductDetails";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Team from "./pages/Team";
+import Contact from "./pages/Contact";
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -47,6 +48,7 @@ function App() {
           <Route path="/about" component={About} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/team" component={Team} />
+          <Route path="/contact" component={Contact} />
         </Switch>
       </Layout>
     </Router>
