@@ -11,6 +11,7 @@ import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Team from "./pages/Team";
 import Contact from "./pages/Contact";
+import CheckoutPage from "./pages/CheckoutPage";
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -45,6 +46,7 @@ function App() {
             path="/product/:categorySlug/:productSlug"
             component={ProductDetails}
           />
+          <Route path="/checkout" component={CheckoutPage} />
           <Route path="/about" component={About} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/team" component={Team} />

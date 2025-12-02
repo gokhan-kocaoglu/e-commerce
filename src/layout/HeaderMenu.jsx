@@ -3,6 +3,7 @@ import { Link, NavLink, useHistory } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAuth, logoutThunk } from "../store/authSlice";
 import { clearCart } from "../store/cartSlice";
+import { http } from "../lib/http";
 import {
   selectWishlistItems,
   toggleWishlistItem,
@@ -34,11 +35,28 @@ import {
 const formatMoney = (m) =>
   !m || m.amount == null ? "" : `${m.amount.toFixed(2)} ${m.currency || "USD"}`;
 
+const toCssColor = (token) => {
+  if (!token) return null;
+  const t = String(token).trim();
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(t)) return t; // #fff, #ffffff
+  if (/^rgba?\(/i.test(t) || /^hsla?\(/i.test(t)) return t; // rgb(), rgba(), hsl()
+  return t; // "red", "blue" vs.
+};
+
 const getProductUrlFromItem = (item) => {
-  if (!item?.slug || !item?.id) return "/shop";
-  const [categorySlug, productSlug] = String(item.slug).split("/");
+  if (!item) return "/shop";
+
+  // slug kandidatları: önce item.slug, yoksa sku (ileride lazımsa)
+  const slug = item.slug || item.sku;
+  // productId kandidatları: önce productId, yoksa id (wishlist'ten gelen)
+  const productId = item.productId || item.id;
+
+  if (!slug || !productId) return "/shop";
+
+  const [categorySlug, productSlug] = String(slug).split("/");
   if (!categorySlug || !productSlug) return "/shop";
-  return `/product/${categorySlug}/${productSlug}?id=${item.id}`;
+
+  return `/product/${categorySlug}/${productSlug}?id=${productId}`;
 };
 
 export default function Header({ className = "" }) {
@@ -377,8 +395,24 @@ export default function Header({ className = "" }) {
                       const href = getProductUrlFromItem(item);
                       const qty = item.quantity || 1;
 
-                      const handleRemove = () => {
-                        dispatch(removeCartItem(item.variantId));
+                      const handleRemove = async () => {
+                        try {
+                          // Kullanıcı login ise BE tarafında da sil
+                          if (isAuthenticated) {
+                            await http.delete(
+                              `/api/cart/items/${item.variantId}`
+                            );
+                          }
+
+                          // Her durumda local state / redux sepetini güncelle
+                          dispatch(removeCartItem(item.variantId));
+                          // İstersen küçük bir info toast da atabilirsin:
+                          // toast.info("Item removed from cart");
+                        } catch (err) {
+                          // Hata durumunda interceptor zaten toast basıyor.
+                          // Eğer istersen burada da loglayabilirsin:
+                          // console.error("Cart item delete failed", err);
+                        }
                       };
 
                       return (
@@ -436,8 +470,18 @@ export default function Header({ className = "" }) {
                                   <>
                                     {" "}
                                     &nbsp; Color:{" "}
-                                    <span className="font-medium">
-                                      {item.color}
+                                    <span className="inline-flex items-center gap-1 mt-[-2px] align-middle">
+                                      {/* Renk dairesi */}
+                                      <span
+                                        className="inline-block h-3 w-3 rounded-full border border-black/10"
+                                        style={{
+                                          backgroundColor: toCssColor(
+                                            item.color
+                                          ),
+                                        }}
+                                      />
+
+                                      {/* <span className="font-medium">{item.color}</span> */}
                                     </span>
                                   </>
                                 )}
@@ -474,7 +518,7 @@ export default function Header({ className = "" }) {
                     <Link
                       to={checkoutRoute}
                       onClick={() => setCartOpen(false)}
-                      className="flex-1 h-9 inline-flex items-center justify-center rounded-[4px] bg-[#F2994A] text-[12px] font-['Montserrat'] font-bold leading-[18px] tracking-[0.2px] text-white hover:bg-[#d67f35]"
+                      className="flex-1 h-9 inline-flex items-center justify-center rounded-[4px] bg-[#23A6F0] text-[12px] font-['Montserrat'] font-bold leading-[18px] tracking-[0.2px] text-white hover:bg-[#031c49]"
                     >
                       Checkout
                     </Link>

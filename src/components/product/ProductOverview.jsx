@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Star, Heart, ShoppingCart, Eye } from "lucide-react";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import prevArrow from "../../assets/slider/carousel-control-prev.png";
@@ -34,6 +34,12 @@ export default function ProductOverview() {
   const [showOptions, setShowOptions] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+
+  // Stok durumu için state
+  const [stockState, setStockState] = useState({
+    loading: false,
+    inStock: false, // varsayılan: stok var gibi davran
+  });
 
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector(selectAuth) ?? {};
@@ -91,6 +97,88 @@ export default function ProductOverview() {
     return Array.from(set);
   }, [variants]);
 
+  useEffect(() => {
+    // Hiç varyant yoksa: direkt Out of Stock
+    if (!variants || variants.length === 0) {
+      setStockState({ loading: false, inStock: false });
+      return;
+    }
+
+    let cancelled = false;
+
+    const checkStock = async () => {
+      setStockState({ loading: true, inStock: false });
+
+      try {
+        // 1) Eğer aktif bir varyant seçilmişse → SADECE onu kontrol et
+        if (activeVariant) {
+          const res = await http.get(
+            `/api/inventory/variants/${activeVariant.id}/stock`,
+            { _skipErrorToast: true }
+          );
+
+          const data = res.data?.data;
+          let isAvailable = false;
+
+          if (data) {
+            if (data.status === "IN_STOCK") {
+              isAvailable = true;
+            } else if (
+              typeof data.quantityAvailable === "number" &&
+              data.quantityAvailable > 0
+            ) {
+              isAvailable = true;
+            }
+          }
+
+          if (!cancelled) {
+            setStockState({ loading: false, inStock: isAvailable });
+          }
+          return;
+        }
+
+        // 2) Eğer aktif varyant YOKSA → TÜM varyantlar içinde global kontrol
+        const requests = variants.map((v) =>
+          http.get(`/api/inventory/variants/${v.id}/stock`, {
+            _skipErrorToast: true,
+          })
+        );
+
+        const results = await Promise.allSettled(requests);
+
+        const anyAvailable = results.some((r) => {
+          if (r.status !== "fulfilled") return false;
+          const data = r.value?.data?.data;
+          if (!data) return false;
+
+          if (data.status === "IN_STOCK") return true;
+          if (
+            typeof data.quantityAvailable === "number" &&
+            data.quantityAvailable > 0
+          ) {
+            return true;
+          }
+          return false;
+        });
+
+        if (!cancelled) {
+          setStockState({ loading: false, inStock: anyAvailable });
+        }
+      } catch (_e) {
+        if (!cancelled) {
+          setStockState({ loading: false, inStock: false });
+        }
+      }
+    };
+
+    checkStock();
+
+    return () => {
+      cancelled = true;
+    };
+    // 🔑 Hem variants değişince hem de seçili varyant değişince tekrar çalışsın
+  }, [variants, activeVariant?.id]);
+
   // --- Wishlist toggle ---
   const handleToggleWishlist = () => {
     if (!product) return;
@@ -127,6 +215,11 @@ export default function ProductOverview() {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    if (!stockState.inStock) {
+      toast.error("This product is currently out of stock.");
+      return;
+    }
+
     // ürün varyantlı ise mutlaka variant seçilsin
     if (variants.length > 0 && !activeVariant) {
       setShowOptions(true);
@@ -147,10 +240,9 @@ export default function ProductOverview() {
 
     const mainImage = product.images?.[0];
     const mainSrc = normalizeImageUrl(mainImage?.url);
-
     const cartPayload = {
       variantId: variant.id,
-      productId: product.id,
+      productId: variant.productId,
       title: product.title,
       slug: product.slug,
       price: variant.priceCents || product.price,
@@ -208,6 +300,8 @@ export default function ProductOverview() {
 
   const shortSummary =
     typeof detail?.shortSummary === "string" ? detail.shortSummary.trim() : "";
+
+  const { loading: stockLoading, inStock } = stockState;
 
   // --- MAIN LAYOUT ---
   return (
@@ -305,9 +399,20 @@ export default function ProductOverview() {
             <span className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#737373]">
               Availability :
             </span>
-            <span className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#23A6F0]">
-              In Stock
-            </span>
+
+            {stockLoading ? (
+              <span className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#737373]">
+                Checking stock…
+              </span>
+            ) : inStock ? (
+              <span className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#23A6F0]">
+                In Stock
+              </span>
+            ) : (
+              <span className="font-['Montserrat'] font-bold text-[14px] leading-[24px] tracking-[0.2px] text-[#E53935]">
+                Out of Stock
+              </span>
+            )}
           </div>
 
           {/* Kısa açıklama */}

@@ -33,7 +33,7 @@ const saveItems = (items) => {
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    // {variantId, productId, title, slug, price, quantity, size, color, thumbnailUrl}
+    // {variantId, productId, title, slug, price, quantity, size, color, thumbnailUrl, lineTotal?}
     items: loadInitialItems(),
   },
   reducers: {
@@ -44,32 +44,99 @@ const cartSlice = createSlice({
       const existing = state.items.find((it) => it.variantId === p.variantId);
       if (existing) {
         existing.quantity = (existing.quantity || 1) + (p.quantity || 1);
+        // lineTotal'ı da güncelle
+        const unitAmount = existing.price?.amount || 0;
+        existing.lineTotal = {
+          amount: unitAmount * (existing.quantity || 1),
+          currency:
+            existing.price?.currency || existing.lineTotal?.currency || "USD",
+        };
       } else {
+        const quantity = p.quantity || 1;
+        const unitAmount = p.price?.amount || 0;
         state.items.push({
           ...p,
-          quantity: p.quantity || 1,
+          quantity,
+          lineTotal: {
+            amount: unitAmount * quantity,
+            currency: p.price?.currency || "USD",
+          },
         });
       }
       saveItems(state.items);
     },
+
     removeItem(state, action) {
       const variantId = action.payload;
       state.items = state.items.filter((it) => it.variantId !== variantId);
       saveItems(state.items);
     },
+
     clearCart(state) {
       state.items = [];
       saveItems(state.items);
     },
-    // 🔹 BE'den gelen sepeti tamamen state'e yazmak için
+
+    // 🔹 Eski setItems dursun (geri uyumluluk için)
     setItems(state, action) {
-      state.items = Array.isArray(action.payload) ? action.payload : [];
+      const arr = Array.isArray(action.payload) ? action.payload : [];
+      state.items = arr;
+      saveItems(state.items);
+    },
+
+    // 🔹 /api/cart cevabını direkt Redux'e map'lemek için
+    setCartFromApi(state, action) {
+      const apiCart = action.payload || {};
+      const apiItems = apiCart.items || [];
+
+      const mapped = apiItems.map((it) => ({
+        variantId: it.variantId,
+        productId: it.productId,
+        title: it.productTitle,
+        slug: it.sku,
+        price: it.unitPrice, // { amount, currency }
+        compareAtPrice: null,
+        quantity: it.quantity || 1,
+        size: it.attributes?.size || null,
+        color: it.attributes?.color || null,
+        thumbnailUrl: it.thumbnailUrl || null,
+        lineTotal: it.lineTotal || null,
+      }));
+
+      state.items = mapped;
+      saveItems(state.items);
+    },
+
+    //Tek satırın quantity'sini güncellemek için
+    updateItemQuantity(state, action) {
+      const { variantId, quantity } = action.payload || {};
+      if (!variantId || quantity == null) return;
+
+      const item = state.items.find((it) => it.variantId === variantId);
+      if (!item) return;
+
+      item.quantity = quantity;
+
+      const unitAmount = item.price?.amount || 0;
+      item.lineTotal = {
+        amount: unitAmount * quantity,
+        currency: item.price?.currency || item.lineTotal?.currency || "USD",
+      };
+
       saveItems(state.items);
     },
   },
 });
 
-export const { addItem, removeItem, clearCart, setItems } = cartSlice.actions;
+export const {
+  addItem,
+  removeItem,
+  clearCart,
+  setItems,
+  setCartFromApi,
+  updateItemQuantity,
+} = cartSlice.actions;
+
 export default cartSlice.reducer;
 
 // ---- Selectors ----
@@ -94,16 +161,6 @@ export const selectCartTotal = createSelector(selectCartItems, (items) =>
 /**
  * 🔸 BE'den tam sepeti çeker ve local state + localStorage'ı BE'ye eşitler
  * endpoint: GET /api/cart
- * response:
- * {
- *   success: true,
- *   data: {
- *     id,
- *     items: [{ variantId, productTitle, attributes, quantity, unitPrice, lineTotal, thumbnailUrl }],
- *     summary: {...}
- *   },
- *   ...
- * }
  */
 export const fetchCartFromServer = createAsyncThunk(
   "cart/fetchCartFromServer",
@@ -112,28 +169,12 @@ export const fetchCartFromServer = createAsyncThunk(
       _skipErrorToast: true,
     });
 
-    const apiCart = res.data?.data;
-    const apiItems = apiCart?.items || [];
-
-    console.log("Fetched cart from server:", apiCart);
-
-    const mapped = apiItems.map((it) => ({
-      variantId: it.variantId,
-      productId: null, // BE'den gelirse doldurursun
-      title: it.productTitle,
-      slug: null, // BE'den productSlug gelirse buraya maplersin
-      price: it.unitPrice, // { amount, currency }
-      compareAtPrice: null,
-      quantity: it.quantity || 1,
-      size: it.attributes?.size || null,
-      color: it.attributes?.color || null,
-      thumbnailUrl: it.thumbnailUrl || null,
-      lineTotal: it.lineTotal || null, // İstersen kullanırsın
-    }));
+    const apiCart = res.data?.data || { items: [] };
 
     // Redux + localStorage state'ini BE ile senkronla
-    dispatch(setItems(mapped));
-    return mapped;
+    dispatch(setCartFromApi(apiCart));
+
+    return apiCart;
   }
 );
 
@@ -143,10 +184,6 @@ export const fetchCartFromServer = createAsyncThunk(
  * 2) /api/cart ile BE'deki sepeti kontrol et
  * 3) Eğer BE'de item yoksa VE local doluysa → local item'ları /api/cart/items'e POST et
  * 4) En sonda fetchCartFromServer ile BE'nin son halini çekip local'i onunla eşitle
- *
- * Bu sayede:
- * - İlk login'de guest sepeti BE'ye taşınır
- * - Sonraki login'lerde BE zaten doluysa tekrar tekrar push edilmez → ikiye katlama olmaz
  */
 export const syncCartOnLogin = createAsyncThunk(
   "cart/syncCartOnLogin",
