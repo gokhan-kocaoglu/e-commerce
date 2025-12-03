@@ -31,6 +31,8 @@ export default function CheckoutPage() {
   // Seçili variantId set'i
   const [selectedIds, setSelectedIds] = useState(new Set());
 
+  const hasSelected = selectedIds.size > 0;
+
   // BE'den gelen shipping / tax / discount bilgisi
   const [baseSummary, setBaseSummary] = useState(null);
 
@@ -460,7 +462,13 @@ export default function CheckoutPage() {
 
             <button
               type="button"
-              className="mt-4 w-full rounded-[4px] bg-[#23A6F0] py-3 text-center font-['Montserrat'] text-[14px] font-bold leading-[22px] tracking-[0.2px] text-white hover:bg-[#031c49]"
+              disabled={!hasSelected}
+              onClick={() => hasSelected && history.push("/checkout/payment")}
+              className={`mt-4 w-full rounded-[4px] py-3 text-center font-['Montserrat'] text-[14px] font-bold leading-[22px] tracking-[0.2px] text-white ${
+                hasSelected
+                  ? "bg-[#23A6F0] hover:bg-[#031c49]"
+                  : "bg-[#A0C8EB] cursor-not-allowed"
+              }`}
             >
               Confirm cart
             </button>
