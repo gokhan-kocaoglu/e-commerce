@@ -1,18 +1,32 @@
 export function saveAuth(data, remember) {
-  // data: { accessToken, refreshToken, expiresAt, user }
   const store = remember ? localStorage : sessionStorage;
 
-  // NEW keys
+  // nerede saklandığını da yaz
+  localStorage.setItem("auth_where", remember ? "local" : "session");
+  sessionStorage.setItem("auth_where", remember ? "" : "session");
+
   store.setItem("accessToken", data.accessToken || "");
   store.setItem("refreshToken", data.refreshToken || "");
   if (data.expiresAt) store.setItem("expiresAt", data.expiresAt);
   if (data.user) store.setItem("user", JSON.stringify(data.user));
 
-  // (Opsiyonel) LEGACY compat – istersen bir süre yazmayı da sürdür
+  // legacy
   store.setItem("auth_token", data.accessToken || "");
   store.setItem("auth_refresh", data.refreshToken || "");
   if (data.expiresAt) store.setItem("auth_exp", data.expiresAt);
   if (data.user) store.setItem("auth_user", JSON.stringify(data.user));
+}
+
+function detectRemember() {
+  const where = localStorage.getItem("auth_where");
+  if (where === "local") return true;
+  if (where === "session") return false;
+
+  // fallback: accessToken localde varsa onu baz al
+  return (
+    !!localStorage.getItem("accessToken") ||
+    !!localStorage.getItem("auth_token")
+  );
 }
 
 export function readAuth() {

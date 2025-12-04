@@ -13,7 +13,8 @@ import Team from "./pages/Team";
 import Contact from "./pages/Contact";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutPaymentPage from "./pages/CheckoutPaymentPage";
-
+import AccountOrders from "./pages/AccountOrders";
+import AccountOrderDetailPage from "./pages/AccountOrderDetailPage";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { loadAnnouncement } from "./store/announcementSlice";
@@ -38,6 +39,11 @@ function App() {
           <Route exact path="/login" component={Login} />
           <Route exact path="/register" component={Register} />
           <Route exact path="/account/profile" component={AccountProfile} />
+          <Route exact path="/account/orders" component={AccountOrders} />
+          <Route
+            path="/account/orders/:orderId"
+            component={AccountOrderDetailPage}
+          />
           {/* Shop alt kategoriler (tek seviye) */}
           <Route path="/shop/:category" component={CatalogPage} />
           {/* 2. seviye ihtiyacı olursa böyle gelmesi gerekiyor:

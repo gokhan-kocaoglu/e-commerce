@@ -1,4 +1,3 @@
-// src/store/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginApi, logoutApi } from "../services/authService";
 import { saveAuth, readAuth, clearAuth } from "../utils/authStorage";
@@ -29,9 +28,10 @@ export const loginThunk = createAsyncThunk(
  */
 export const logoutThunk = createAsyncThunk(
   "auth/logout",
-  async (_, { rejectWithValue }) => {
+  // payload opsiyonel: { logoutAll?: boolean }
+  async (payload, { rejectWithValue }) => {
     try {
-      await logoutApi();
+      await logoutApi(payload ?? { logoutAll: false });
       return true;
     } catch (err) {
       return rejectWithValue(
@@ -74,6 +74,16 @@ const authSlice = createSlice({
      */
     setUser(state, action) {
       state.user = action.payload || null;
+    },
+
+    setTokens(state, action) {
+      const { accessToken, expiresAt, user } = action.payload || {};
+      if (accessToken) {
+        state.accessToken = accessToken;
+        state.isAuthenticated = true;
+      }
+      if (expiresAt) state.expiresAt = expiresAt;
+      if (user) state.user = user;
     },
   },
   extraReducers: (b) => {
@@ -124,7 +134,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setUser } = authSlice.actions;
+export const { logout, setUser, setTokens } = authSlice.actions;
 export const selectAuth = (state) => state.auth;
 export const selectIsAuthenticated = (state) => !!state.auth?.isAuthenticated;
 export default authSlice.reducer;
