@@ -46,7 +46,7 @@ function App() {
           />
           {/* Shop alt kategoriler (tek seviye) */}
           <Route path="/shop/:category" component={CatalogPage} />
-          {/* 2. seviye ihtiyacı olursa:
+          {/* 2. seviye ihtiyacı olursa bu:
              <Route path="/shop/:category/:sub" component={CatalogPage} />
           */}
           <Route
