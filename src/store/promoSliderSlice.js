@@ -13,7 +13,7 @@ export const fetchPromoItems = createAsyncThunk(
     }
   },
   {
-    // İsteğe bağlı: aynı anda tekrar fetch etme
+    //aynı anda tekrar fetch etme
     condition: (_, { getState }) => {
       const { promo } = getState();
       return promo.status !== "loading";
@@ -32,7 +32,7 @@ const promoSlice = createSlice({
   name: "promo",
   initialState,
   reducers: {
-    // İsteğe bağlı manuel set
+    //manuel set
     setPromoItems(state, action) {
       state.items = action.payload || [];
     },

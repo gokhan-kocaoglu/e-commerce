@@ -1,5 +1,3 @@
-// src/data/pricingData.js
-
 export const pricingPages = [
   {
     id: "pricing-main",
@@ -199,7 +197,7 @@ export const pricingPages = [
       footer: {
         preText: "Haven’t got your answer?",
         linkLabel: "Contact our support",
-        contactNavId: "contact", // siteConfig.navigation.primary içinden resolve edeceğiz
+        contactNavId: "contact", // siteConfig.navigation.primary içinden resolve edilecek.
       },
     },
     trialCta: {
@@ -216,15 +214,12 @@ export const pricingPages = [
   },
 ];
 
-// Hero için kullandığımız helper
 export const getPricingHero = (locale = "en") =>
   pricingPages.find((p) => p.locale === locale)?.hero ?? null;
 
-// Yeni: pricing table datası
 export const getPricingTable = (locale = "en") =>
   pricingPages.find((p) => p.locale === locale)?.table ?? null;
 
-// Yeni: pricing clients datası
 export const getPricingClients = (locale = "en") =>
   pricingPages.find((p) => p.locale === locale)?.clientsSection ?? null;
 

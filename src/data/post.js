@@ -1,10 +1,3 @@
-// src/data/posts.js
-// Backend'e taşınabilirlik için :
-// - posts: içerik kayıtları
-// - media: görseller (ayrık tutuldu)
-// - tags: etiket sözlüğü (id->label)
-// - sections: sayfa blokları (örn. featured)
-
 import post1 from "../assets/post/post1.jpg";
 import post2 from "../assets/post/post2.png";
 import post3 from "../assets/post/post3.png";

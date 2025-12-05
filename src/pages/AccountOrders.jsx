@@ -104,7 +104,7 @@ export default function AccountOrders() {
         </>
       )}
 
-      {/* küçük bir geri linki (opsiyonel) */}
+      {/* küçük bir geri linki*/}
       <div className="mt-8 text-sm text-[#737373]">
         <Link to="/shop" className="text-[#23A6F0] hover:underline">
           &larr; Back to shop

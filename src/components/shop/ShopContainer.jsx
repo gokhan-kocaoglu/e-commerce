@@ -1,4 +1,3 @@
-// src/components/shop/ShopContainer.jsx
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { getPrimaryNav } from "../../data/siteConfig";

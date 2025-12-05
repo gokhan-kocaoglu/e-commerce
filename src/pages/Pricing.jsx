@@ -12,7 +12,6 @@ export default function PricingPage() {
       <PricingClientSection />
       <PricingFaqsSection />
       <PricingTrialCta />
-      {/* Sonraki bölümler (plan kartları vs) buraya gelecek */}
     </main>
   );
 }

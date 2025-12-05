@@ -1,4 +1,3 @@
-// src/services/authService.js
 import axios from "axios";
 import { http } from "../lib/http";
 import { readAuth, clearAuth } from "../utils/authStorage";
@@ -32,7 +31,7 @@ export async function logoutApi({ logoutAll = false } = {}) {
       logoutAll,
     });
   } finally {
-    // BE ne derse desin, FE tarafını her durumda temizliyoruz
+    // BE ne derse desin, FE tarafını her durumda temizle
     clearAuth();
   }
 }
@@ -44,9 +43,7 @@ export async function refreshApi() {
   if (!refreshToken) {
     throw new Error("NO_REFRESH_TOKEN");
   }
-
-  // DİKKAT: burada http değil, DÜZ axios kullanıyoruz
-  // yoksa interceptor içine interceptor girip saçmalayabilir.
+  // Direkt axios ile yapalım, http instance’ı kullanmayalım
   const res = await axios.post(
     `${baseURL}/api/auth/refresh`,
     { refreshToken },

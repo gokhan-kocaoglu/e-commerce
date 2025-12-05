@@ -1,4 +1,3 @@
-// src/pages/ProductDetails.jsx
 import ShopContainer from "../components/shop/ShopContainer";
 import ProductOverview from "../components/product/ProductOverview";
 import { ProductPageProvider } from "../components/product/ProductPageContext";
@@ -12,7 +11,7 @@ export default function ProductDetails() {
   const location = useLocation();
 
   const search = new URLSearchParams(location.search);
-  const productId = search.get("id"); // UniversalProductCard'dan ?id=... ile geldiğini varsayıyoruz
+  const productId = search.get("id");
 
   const categoryLabel = categorySlug
     ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)
@@ -36,13 +35,8 @@ export default function ProductDetails() {
       <ShopContainer heading={categoryLabel} customTrail={trail} />
 
       <ProductPageProvider productId={productId}>
-        {/* 1) Ürün ana blok */}
         <ProductOverview />
-
-        {/* 2) Description / Info / Reviews tabları */}
         <ProductDescriptionTabs />
-
-        {/* 3) Aynı kategoriye özel BESTSELLER ürünler */}
         <ProductCategoryBestSellers limit={8} />
       </ProductPageProvider>
       <ClientsStrip className="mt-12" size="lg" />

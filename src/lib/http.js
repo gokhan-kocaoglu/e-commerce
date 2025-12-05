@@ -1,4 +1,3 @@
-// src/lib/http.js
 import axios from "axios";
 import { toast } from "react-toastify";
 import { readAuth, saveAuth, clearAuth } from "../utils/authStorage";

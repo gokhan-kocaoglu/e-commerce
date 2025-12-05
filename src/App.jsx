@@ -25,7 +25,7 @@ function App() {
   useEffect(() => {
     const cancel = dispatch(loadAnnouncement());
     return () => {
-      // thunk iptali (AbortController kullandıysan)
+      // thunk iptali (AbortController kullandığın zaman)
       if (typeof cancel === "function") cancel();
     };
   }, [dispatch]);

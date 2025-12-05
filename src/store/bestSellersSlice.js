@@ -103,7 +103,7 @@ export const fetchVariantColorsForProduct = createAsyncThunk(
   }
 );
 
-// Bir seferde listedeki ürünlerin renklerini getir (N+1’i kontrollü paralellikte çözer)
+// Bir seferde listedeki ürünlerin renklerini getir.
 export const fetchVariantColorsForList = createAsyncThunk(
   "bestSellers/fetchVariantColorsForList",
   async ({ productIds, signal, concurrency = 4 }, { dispatch, getState }) => {

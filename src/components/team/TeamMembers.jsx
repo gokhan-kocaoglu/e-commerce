@@ -1,4 +1,3 @@
-// src/components/team/TeamMembers.jsx
 import { Facebook, Instagram, Twitter } from "lucide-react";
 import { getTeamMembersSection } from "../../data/team";
 

@@ -1,4 +1,3 @@
-// src/layout/Header.jsx (veya senin yolun)
 import AnnouncementTicker from "../components/AnnouncementTicker";
 import {
   Phone,

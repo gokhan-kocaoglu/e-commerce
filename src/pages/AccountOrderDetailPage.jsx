@@ -1,4 +1,3 @@
-// src/pages/account/AccountOrderDetailPage.jsx
 import { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useParams, useHistory, Link } from "react-router-dom";
@@ -31,14 +30,14 @@ export default function AccountOrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | loading | succeeded | failed
 
-  // ✅ Auth guard
+  //Auth guard
   useEffect(() => {
     if (!isAuthenticated) {
       history.replace(`/login?redirect=/account/orders/${orderId}`);
     }
   }, [isAuthenticated, history, orderId]);
 
-  // ✅ Order fetch
+  //Order fetch
   useEffect(() => {
     if (!isAuthenticated || !orderId) return;
 

@@ -27,7 +27,7 @@ export function isCampaignActive(c) {
   return !!c.active && startOk && endOk;
 }
 
-/** BE kampanyasını PromoSlider’ın beklediği item’a map et */
+/** BE kampanyasını PromoSlider’ın beklediği item’a map*/
 export function mapCampaignToPromoItem(c) {
   return {
     id: c.id,
@@ -42,7 +42,7 @@ export function mapCampaignToPromoItem(c) {
       src: normalizeImageUrl(c.imageUrl),
       alt: c.subtitle || c.title || "campaign",
       maxWidthDesktop: "460px",
-      // mobileHeight: "60svh", // istersen ileride aç
+      // mobileHeight: "60svh",
     },
     content: {
       kicker: c.title, // ör: "SUMMER 2020"
@@ -58,7 +58,7 @@ export function mapCampaignToPromoItem(c) {
   };
 }
 
-/** Listeyi filtrele, sırala, map et */
+/** Listeyi filtrele, sırala, map*/
 export function adaptCampaignsToPromoItems(list = []) {
   return list
     .filter(isCampaignActive)

@@ -14,6 +14,5 @@ export const store = configureStore({
     auth: authReducer,
     wishlist: wishlistReducer,
     cart: cartReducer,
-    // diğer slice'lar...
   },
 });

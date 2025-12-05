@@ -1,4 +1,3 @@
-// src/pages/CheckoutPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useHistory, Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";

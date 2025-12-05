@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
@@ -35,8 +34,8 @@ export default function Example() {
       await dispatch(loginThunk({ email, password, remember })).unwrap();
 
       // 2) Login sonrası sepet senkronu:
-      //    - Eğer BE sepeti boşsa ve local doluysa -> local BE'ye taşınır
-      //    - En sonunda BE'den çekilip redux+localStorage BE ile eşitlenir
+      //    - Eğer BE sepeti boşsa ve local doluysa -> local BE'ye taşı
+      //    - En sonunda BE'den çekilip redux+localStorage BE ile eşitle
       await dispatch(syncCartOnLogin()).unwrap();
     } catch {
       setError("password", {

@@ -38,7 +38,7 @@ export default function ProductOverview() {
   // Stok durumu için state
   const [stockState, setStockState] = useState({
     loading: false,
-    inStock: false, // varsayılan: stok var gibi davran
+    inStock: false, // varsayılan: stok yok gibi davran
   });
 
   const dispatch = useDispatch();
@@ -176,7 +176,7 @@ export default function ProductOverview() {
     return () => {
       cancelled = true;
     };
-    // 🔑 Hem variants değişince hem de seçili varyant değişince tekrar çalışsın
+    //Hem variants değişince hem de seçili varyant değişince tekrar çalışsın
   }, [variants, activeVariant?.id]);
 
   // --- Wishlist toggle ---
@@ -233,7 +233,7 @@ export default function ProductOverview() {
     const variant = activeVariant || variants[0] || null;
     if (!variant) {
       // burada hiç variant yoksa BE tarafınızda farklı bir model olabilir;
-      // şimdilik güvenlik için çıkıyoruz
+      // güvenlik için çıkıyoruz
       toast.error("This product cannot be added to cart.");
       return;
     }

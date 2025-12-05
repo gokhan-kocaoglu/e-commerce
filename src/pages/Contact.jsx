@@ -8,7 +8,6 @@ export default function Contact() {
       <ContactHero />
       <ContactVisitOffice />
       <ContactLetsTalk />
-      {/* ileride: contact form, map vs. */}
     </main>
   );
 }

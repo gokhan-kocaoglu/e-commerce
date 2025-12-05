@@ -1,4 +1,3 @@
-// src/components/product/ProductDescriptionTabs.jsx
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useProductPage } from "../product/ProductPageContext";

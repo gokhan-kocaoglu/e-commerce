@@ -1,5 +1,3 @@
-// Contact page content — backend'e bire bir taşınabilecek yapı
-
 const contactPages = [
   {
     id: "contact-main",

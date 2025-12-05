@@ -1,4 +1,3 @@
-// src/components/product/ProductCategoryBestSellers.jsx
 import { useProductPage } from "./ProductPageContext";
 import BestSellers from "../BestSellers";
 

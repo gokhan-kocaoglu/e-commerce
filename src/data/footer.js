@@ -1,11 +1,3 @@
-// src/data/footer.js
-// Backend'e taşınabilir data modeli (id'ler, slug'lar, URL'ler, sıralama alanları vs.)
-
-/**
- * @typedef {{ id:string, label:string, href?:string, to?:string, external?:boolean }} FooterLink
- * @typedef {{ id:string, title:string, sort:number, links:FooterLink[] }} FooterColumn
- */
-
 export const footerData = {
   brand: {
     id: "brand",
@@ -99,7 +91,6 @@ export const footerData = {
     placeholder: "Your Email",
     buttonLabel: "Subscribe",
     helperText: "Lore imp sum dolor Amit",
-    // ileride backend için uç noktayı tek yerden yönetebilmek adına:
     submitEndpoint: "/newsletter/subscribe",
     method: "POST",
   },

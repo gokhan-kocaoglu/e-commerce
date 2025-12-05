@@ -1,4 +1,3 @@
-// src/store/cartSlice.js
 import {
   createSlice,
   createSelector,
@@ -159,7 +158,7 @@ export const selectCartTotal = createSelector(selectCartItems, (items) =>
 );
 
 /**
- * 🔸 BE'den tam sepeti çeker ve local state + localStorage'ı BE'ye eşitler
+ * BE'den tam sepeti çeker ve local state + localStorage'ı BE'ye eşitler
  * endpoint: GET /api/cart
  */
 export const fetchCartFromServer = createAsyncThunk(
@@ -179,7 +178,7 @@ export const fetchCartFromServer = createAsyncThunk(
 );
 
 /**
- * 🔸 LOGIN SONRASI SENKRON:
+ * LOGIN SONRASI SENKRON:
  * 1) Local (guest) sepetini oku
  * 2) /api/cart ile BE'deki sepeti kontrol et
  * 3) Eğer BE'de item yoksa VE local doluysa → local item'ları /api/cart/items'e POST et

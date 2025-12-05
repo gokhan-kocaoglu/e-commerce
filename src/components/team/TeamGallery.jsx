@@ -1,4 +1,3 @@
-// src/components/team/TeamGallery.jsx
 import { getTeamGallery } from "../../data/team";
 
 export default function TeamGallery({ locale = "en", className = "" }) {

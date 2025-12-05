@@ -406,11 +406,8 @@ export default function Header({ className = "" }) {
 
                           // Her durumda local state / redux sepetini güncelle
                           dispatch(removeCartItem(item.variantId));
-                          // İstersen küçük bir info toast da atabilirsin:
                           // toast.info("Item removed from cart");
                         } catch (err) {
-                          // Hata durumunda interceptor zaten toast basıyor.
-                          // Eğer istersen burada da loglayabilirsin:
                           // console.error("Cart item delete failed", err);
                         }
                       };
@@ -583,13 +580,10 @@ export default function Header({ className = "" }) {
                     const href = getProductUrlFromItem(item);
 
                     const handleRemove = () => {
-                      // item shape’i wishlistSlice'a push ettiğin ile aynı
                       dispatch(toggleWishlistItem(item));
                     };
 
                     const handleAddToCart = () => {
-                      // 🔹 Burayı kendi cartSlice’ına göre uyarlayacaksın
-                      // örn: dispatch(addToCart({ productId: item.id, quantity: 1 }))
                       console.log("Sepete ekle:", item);
                     };
 

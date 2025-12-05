@@ -11,7 +11,7 @@ export default function PricingClientSection({ className = "" }) {
       title={title}
       h4={subtitle}
       size="lg"
-      showLabels={false} // sadece logo istiyoruz; yazı istenirse true yapılır
+      showLabels={false} // sadece logo istiyoruz; yazı istenirse true
       className={className}
     />
   );

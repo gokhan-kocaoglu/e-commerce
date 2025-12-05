@@ -1,7 +1,6 @@
-// src/components/home/EditorsPick.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { http } from "../lib/http"; // verdiğin axios instance
+import { http } from "../lib/http";
 
 // Vite alt dizin deploy desteği için görsel yolu normalize
 const withBase = (p = "") => {

@@ -1,4 +1,3 @@
-// src/pages/Register.jsx
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useHistory, Link as RouterLink } from "react-router-dom";

@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { http } from "../lib/http";
 
-// küçük adapter (öncekiyle aynı mantık)
 const withBase = (p) => {
   if (!p) return "";
   if (/^https?:\/\//i.test(p)) return p;
@@ -35,7 +34,6 @@ export function useCollectionsSummaries() {
   });
 }
 
-// (opsiyonel) hover ile prefetch
 export function usePrefetchCollectionDetail() {
   const qc = useQueryClient();
   return (slug) =>

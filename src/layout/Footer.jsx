@@ -1,4 +1,3 @@
-// src/layout/Footer.jsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";

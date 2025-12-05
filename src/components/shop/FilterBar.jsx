@@ -1,4 +1,3 @@
-// src/components/shop/FilterBar.jsx
 import { useEffect, useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
 import { ChevronDown } from "lucide-react";

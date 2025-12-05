@@ -1,4 +1,3 @@
-// src/store/wishlistSlice.js
 import { createSlice, createSelector } from "@reduxjs/toolkit";
 
 const STORAGE_KEY = "wishlistItems";

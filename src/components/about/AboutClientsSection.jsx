@@ -13,7 +13,7 @@ export default function AboutClientsSection({ className = "" }) {
       subtitle={subtitle}
       subtitleDesktop={subtitleDesktop}
       size="lg"
-      showLabels={false} // sadece logo istiyoruz; yazı istenirse true yapılır
+      showLabels={false} // sadece logo ; yazı da istenirse true
       className={className}
     />
   );

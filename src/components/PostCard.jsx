@@ -1,4 +1,3 @@
-// src/components/blog/PostCard.jsx
 import { Link } from "react-router-dom";
 import { Clock, MessageSquare, ChevronRight } from "lucide-react";
 import { getMediaById, getTagById } from "../data/post";

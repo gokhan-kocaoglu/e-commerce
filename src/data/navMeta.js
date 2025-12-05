@@ -1,4 +1,3 @@
-// src/data/navMeta.js
 import { getPrimaryNav } from "./siteConfig";
 
 /** Nav ağacını düzleştir → {id, path, label, parentId} listesi */

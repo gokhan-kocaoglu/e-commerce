@@ -1,4 +1,3 @@
-// src/components/home/FeaturedPosts.jsx
 import { getFeaturedSection } from "../data/post";
 import PostCard from "../components/PostCard";
 
